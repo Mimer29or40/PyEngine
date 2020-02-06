@@ -1,0 +1,62 @@
+{
+    "nodes": {
+        "0": {
+            "layer": 0,
+            "type": "INPUT"
+        },
+        "1": {
+            "layer": 0,
+            "type": "INPUT"
+        },
+        "2": {
+            "layer": 0,
+            "type": "INPUT"
+        },
+        "3": {
+            "layer": 2,
+            "type": "OUTPUT"
+        },
+        "4": {
+            "layer": 1,
+            "type": "HIDDEN"
+        }
+    },
+    "cons": {
+        "0": {
+            "in": 0,
+            "out": 3,
+            "weight": 1.0,
+            "enabled": true
+        },
+        "1": {
+            "in": 1,
+            "out": 3,
+            "weight": 1.0,
+            "enabled": false
+        },
+        "2": {
+            "in": 2,
+            "out": 3,
+            "weight": 1.0,
+            "enabled": true
+        },
+        "3": {
+            "in": 1,
+            "out": 4,
+            "weight": 1.0,
+            "enabled": true
+        },
+        "4": {
+            "in": 4,
+            "out": 3,
+            "weight": 1.0,
+            "enabled": true
+        },
+        "5": {
+            "in": 0,
+            "out": 4,
+            "weight": 1.0,
+            "enabled": true
+        }
+    }
+}
