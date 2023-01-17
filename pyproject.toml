@@ -123,7 +123,10 @@ requires-python = ">=3.8"
 # For dependencies, it is a key whose value is an array of strings. Each string
 #   represents a dependency of the project and MUST be formatted as a valid PEP 508
 #   string. Each string maps directly to a Requires-Dist entry.
-#dependencies = []  # Defined in setup.py until PyCharm can detect requirements here
+dependencies = [  # Defined in setup.py until PyCharm can detect requirements here
+    "pygame",
+    "numpy"
+]
 
 # dynamic
 # TOML type: array of string
@@ -191,7 +194,9 @@ Documentation = "https://github.com/Mimer29or40/PyEngine/wiki"
 #   thus becomes a corresponding Requires-Dist entry for the matching Provides-Extra
 #   metadata.
 [project.optional-dependencies]
-#tests = ["tox"]  # TODO - Defined in setup.py until PyCharm can detect requirements here
+tests = [  # Defined in setup.py until PyCharm can detect requirements here
+    "tox"
+]
 
 [tool.setuptools]
 # platforms
