@@ -14,7 +14,7 @@ from linalg import vector as _v
 
 # model ######################################################################
 
-bbox = [-1., 1.]
+bbox = [-1.0, 1.0]
 points = [(x, y, z) for x in bbox for y in bbox for z in bbox]
 
 faces = [
@@ -28,7 +28,7 @@ faces = [
 
 
 def rgb(x, y, z):
-    return x / 2 + .5, y / 2 + .5, z / 2 + .5
+    return x / 2 + 0.5, y / 2 + 0.5, z / 2 + 0.5
 
 
 sizes = []

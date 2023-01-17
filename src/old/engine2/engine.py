@@ -1,25 +1,26 @@
 import time
+
 from . import events
 
 
 class Game:
     def __init__(self):
         self.name = self.__class__.__name__
-    
+
     def init(self):
         pass
-    
+
     def process_events(self, events):
         for event in events:
             if event.type == events.QUIT:
                 stop()
-    
+
     def update(self, t, dt):
         pass
-    
+
     def render(self, t, dt):
         pass
-    
+
     def shutdown(self):
         pass
 
@@ -27,7 +28,7 @@ class Game:
 def set_game(game):
     global _game
     if _running:
-        raise Exception('Engine is Running')
+        raise Exception("Engine is Running")
     _game = game
 
 
@@ -65,51 +66,51 @@ def run():
     global _start_time, _running, _tps_actual, _fps_actual
     try:
         _game.init()
-        
+
         _start_time = time.perf_counter_ns()
         _running = True
-        
+
         tick_count = 0
         frame_count = 0
-        
+
         last_tick = get_time()
         last_frame = get_time()
         last_sec = get_time()
-        
+
         while _running:
             _game.process_events(events.get_events())
-            
+
             t = get_time()
             dt = t - last_tick
             if dt >= _spt_target:
                 tick_count += 1
                 last_tick = t
-                
+
                 _game.update(t / 1e9, dt / 1e9)
-            
+
             t = get_time()
             dt = t - last_frame
             if dt >= _spf_target:
                 frame_count += 1
                 last_frame = t
-                
+
                 _game.render(t / 1e9, dt / 1e9)
-            
+
             t = get_time()
             dt = t - last_sec
             if dt >= 1e9:
                 last_sec = t
-                
+
                 _tps_actual = tick_count
                 _fps_actual = frame_count
-                
+
                 tick_count = 0
                 frame_count = 0
-        
+
     except Exception as e:
         # print(e)
         raise
-    
+
     _game.shutdown()
 
 

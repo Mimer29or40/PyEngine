@@ -87,11 +87,13 @@ class Fluid:
 
         for _ in range(self.iterations):
             x[self.ix(i, j)] = (
-                x0 + a * (
-                    np.roll(x0, 1, axis = 1)
-                    + np.roll(x0, -1, axis = 1)
-                    + np.roll(x0, 1, axis = 0)
-                    + np.roll(x0, -1, axis = 0)
+                x0
+                + a
+                * (
+                    np.roll(x0, 1, axis=1)
+                    + np.roll(x0, -1, axis=1)
+                    + np.roll(x0, 1, axis=0)
+                    + np.roll(x0, -1, axis=0)
                 )
             )[self.ix(i, j)] * c_recip
 
@@ -109,27 +111,29 @@ class Fluid:
         i = self.slice()
         j = self.slice()
 
-        div[self.ix(i, j)] = -0.5 * (
-                np.roll(v_x, 1, axis = 1)
-                - np.roll(v_x, -1, axis = 1)
-                + np.roll(v_y, 1, axis = 0)
-                - np.roll(v_y, -1, axis = 0)
-        )[self.ix(i, j)] / n
+        div[self.ix(i, j)] = (
+            -0.5
+            * (
+                np.roll(v_x, 1, axis=1)
+                - np.roll(v_x, -1, axis=1)
+                + np.roll(v_y, 1, axis=0)
+                - np.roll(v_y, -1, axis=0)
+            )[self.ix(i, j)]
+            / n
+        )
         p[self.ix(i, j)] = p[self.ix(i, j)] * 0
 
         self.set_boundary(0, div)
         self.set_boundary(0, p)
         self.lin_solve(0, p, div, 1, 6)
 
-        v_x[self.ix(i, j)] -= 0.5 * (
-                np.roll(p, 1, axis = 1)
-                - np.roll(p, -1, axis = 1)
-        )[self.ix(i, j)] * n
+        v_x[self.ix(i, j)] -= (
+            0.5 * (np.roll(p, 1, axis=1) - np.roll(p, -1, axis=1))[self.ix(i, j)] * n
+        )
 
-        v_y[self.ix(i, j)] -= 0.5 * (
-                np.roll(p, 1, axis = 0)
-                - np.roll(p, -1, axis = 0)
-        )[self.ix(i, j)] * n
+        v_y[self.ix(i, j)] -= (
+            0.5 * (np.roll(p, 1, axis=0) - np.roll(p, -1, axis=0))[self.ix(i, j)] * n
+        )
 
         self.set_boundary(1, v_x)
         self.set_boundary(2, v_y)
@@ -143,7 +147,7 @@ class Fluid:
         dtx = dt * (n - 2)
         dty = dt * (n - 2)
 
-        lin = np.linspace(0, n, n, endpoint = False)
+        lin = np.linspace(0, n, n, endpoint=False)
         i_float, j_float = np.meshgrid(lin, lin)
 
         x = np.clip(i_float - (dtx * v_x), 0.5, n + 0.5)[self.ix(i, j)]
@@ -159,15 +163,8 @@ class Fluid:
         t1 = y - j0
         t0 = 1.0 - t1
 
-        d[self.ix(i, j)] = (
-            s0 * (
-                t0 * d0[self.ix(i0, j0)]
-                + t1 * d0[self.ix(i0, j1)]
-            )
-            + s1 * (
-                t0 * d0[self.ix(i1, j0)]
-                + t1 * d0[self.ix(i1, j1)]
-            )
+        d[self.ix(i, j)] = s0 * (t0 * d0[self.ix(i0, j0)] + t1 * d0[self.ix(i0, j1)]) + s1 * (
+            t0 * d0[self.ix(i1, j0)] + t1 * d0[self.ix(i1, j1)]
         )
 
         self.set_boundary(b, d)
@@ -212,12 +209,12 @@ class FluidNew:
     def add_density(self, x, y, amount):
         self.density[self.ix(x, y)] += amount
 
-    def add_velocity(self, x, y, amount = (0, 0)):
+    def add_velocity(self, x, y, amount=(0, 0)):
         self.v[(slice(None), *self.ix(x, y))] += amount
 
 
-if __name__ == '__main__':
-    np.set_printoptions(linewidth = 9999, precision = 6, edgeitems = 10, threshold = 4000, suppress = True)
+if __name__ == "__main__":
+    np.set_printoptions(linewidth=9999, precision=6, edgeitems=10, threshold=4000, suppress=True)
 
     size, dt, diff, visc = 16, 0.0001, 0.00001, 0.01
 

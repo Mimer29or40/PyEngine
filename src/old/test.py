@@ -13,21 +13,22 @@ Licence: GPLv3 or higher <http://www.gnu.org/licenses/gpl.html>
 # imports ####################################################################
 
 import sys
-
-from math import exp, modf
+from ctypes import c_float
+from ctypes import c_uint
+from ctypes import c_void_p
+from ctypes import sizeof
+from math import exp
+from math import modf
 from time import time
-from ctypes import sizeof, c_float, c_void_p, c_uint
-
-from OpenGL.GLUT import *
-from OpenGL.GL import *
-
-from linalg import matrix as m
-from linalg import quaternion as q
 
 import cube
-
+from linalg import matrix as m
+from linalg import quaternion as q
+from OpenGL.GL import *
+from OpenGL.GLUT import *
 
 # shader #####################################################################
+
 
 def create_shader(shader_type, source):
     """compile a shader."""
@@ -44,7 +45,9 @@ uniforms = [b"lighting", b"texturing", b"texture_3d"]
 
 
 def init_program():
-    vert_shader = create_shader(GL_VERTEX_SHADER, """
+    vert_shader = create_shader(
+        GL_VERTEX_SHADER,
+        """
 		uniform bool lighting;
 
 		varying vec3 N, L, S;
@@ -60,9 +63,12 @@ def init_program():
 			}
 			gl_FrontColor = gl_Color;
 		}
-	""")
+	""",
+    )
 
-    frag_shader = create_shader(GL_FRAGMENT_SHADER, """
+    frag_shader = create_shader(
+        GL_FRAGMENT_SHADER,
+        """
 		const float alpha_threshold = .55;
 
 		uniform bool texturing;
@@ -89,7 +95,8 @@ def init_program():
 			}
 			gl_FragColor = color;
 		}
-	""")
+	""",
+    )
 
     program = glCreateProgram()
     glAttachShader(program, vert_shader)
@@ -107,6 +114,7 @@ def init_program():
 
 # texture ####################################################################
 
+
 def init_texture():
     glActiveTexture(GL_TEXTURE0 + 0)
     glBindTexture(GL_TEXTURE_3D, glGenTextures(1))
@@ -115,20 +123,25 @@ def init_texture():
     glTexParameter(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     glTexParameter(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
 
-    def pixel(i, j, k, opaque = b'\xff\xff\xff\xff',
-              transparent = b'\xff\xff\xff\x00'):
+    def pixel(i, j, k, opaque=b"\xff\xff\xff\xff", transparent=b"\xff\xff\xff\x00"):
         return opaque if (i + j + k) % 2 == 0 else transparent
 
     width = height = depth = 2
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA,
-                 width, height, depth,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                 b"".join(pixel(i, j, k) for i in range(width)
-                          for j in range(height)
-                          for k in range(depth)))
+    glTexImage3D(
+        GL_TEXTURE_3D,
+        0,
+        GL_RGBA,
+        width,
+        height,
+        depth,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        b"".join(pixel(i, j, k) for i in range(width) for j in range(height) for k in range(depth)),
+    )
 
 
-def animate_texture(fps = 25, period = 10):
+def animate_texture(fps=25, period=10):
     f, _ = modf(time() / period)
 
     glMatrixMode(GL_TEXTURE)
@@ -145,11 +158,12 @@ def animate_texture(fps = 25, period = 10):
 
 # object #####################################################################
 
+
 def flatten(*lll):
     return [u for ll in lll for l in ll for u in l]
 
 
-def init_object(model =cube):
+def init_object(model=cube):
     # enabling arrays
     glEnableClientState(GL_VERTEX_ARRAY)
     glEnableClientState(GL_TEXTURE_COORD_ARRAY)
@@ -159,8 +173,7 @@ def init_object(model =cube):
     # model data
     global sizes
     sizes, indicies = model.sizes, model.indicies
-    data = flatten(*zip(model.verticies, model.tex_coords,
-                        model.normals, model.colors))
+    data = flatten(*zip(model.verticies, model.tex_coords, model.normals, model.colors))
 
     # loading buffers
     indices_buffer = (c_uint * len(indicies))(*indicies)
@@ -198,9 +211,7 @@ def draw_object():
 
     offset = 0
     for size in sizes:
-        glDrawElements(GL_TRIANGLE_STRIP,
-                       size, GL_UNSIGNED_INT,
-                       c_void_p(offset))
+        glDrawElements(GL_TRIANGLE_STRIP, size, GL_UNSIGNED_INT, c_void_p(offset))
         offset += size * uint_size
 
     glPopMatrix()
@@ -208,12 +219,14 @@ def draw_object():
 
 # display ####################################################################
 
-def screen_shot(name = "screen_shot.png"):
+
+def screen_shot(name="screen_shot.png"):
     """window screenshot."""
     width, height = glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT)
     data = glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE)
 
     import png
+
     png.write(open(name, "wb"), width, height, 3, data)
 
 
@@ -223,7 +236,7 @@ def reshape(width, height):
 
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-    radius = .5 * min(width, height)
+    radius = 0.5 * min(width, height)
     w, h = width / radius, height / radius
     if perspective:
         glFrustum(-w, w, -h, h, 8, 16)
@@ -245,14 +258,14 @@ def display():
 
 # interaction ################################################################
 
-PERSPECTIVE, LIGHTING, TEXTURING = b'p', b'l', b't'
+PERSPECTIVE, LIGHTING, TEXTURING = b"p", b"l", b"t"
 
 perspective = False
 lighting = False
 texturing = False
 
 
-def keyboard(c, x = 0, y = 0):
+def keyboard(c, x=0, y=0):
     """keyboard callback."""
     global perspective, lighting, texturing
 
@@ -270,10 +283,10 @@ def keyboard(c, x = 0, y = 0):
         if texturing:
             animate_texture()
 
-    elif c == b's':
+    elif c == b"s":
         screen_shot()
 
-    elif c == b'q':
+    elif c == b"q":
         sys.exit(0)
     glutPostRedisplay()
 
@@ -282,21 +295,21 @@ rotating = False
 scaling = False
 
 rotation = q.quaternion()
-scale = 1.
+scale = 1.0
 
 
 def screen2space(x, y):
     width, height = glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT)
     radius = min(width, height) * scale
-    return (2. * x - width) / radius, -(2. * y - height) / radius
+    return (2.0 * x - width) / radius, -(2.0 * y - height) / radius
 
 
 def mouse(button, state, x, y):
     global rotating, scaling, x0, y0
     if button == GLUT_LEFT_BUTTON:
-        rotating = (state == GLUT_DOWN)
+        rotating = state == GLUT_DOWN
     elif button == GLUT_RIGHT_BUTTON:
-        scaling = (state == GLUT_DOWN)
+        scaling = state == GLUT_DOWN
     x0, y0 = x, y
 
 
@@ -307,7 +320,7 @@ def motion(x1, y1):
         p1 = screen2space(x1, y1)
         rotation = q.product(rotation, q.arcball(*p0), q.arcball(*p1))
     if scaling:
-        scale *= exp(((x1 - x0) - (y1 - y0)) * .01)
+        scale *= exp(((x1 - x0) - (y1 - y0)) * 0.01)
     x0, y0 = x1, y1
     glutPostRedisplay()
 
@@ -338,10 +351,10 @@ def init_opengl():
     glDepthFunc(GL_LEQUAL)
 
     # lighting
-    light_position = [1., 1., 2., 0.]
+    light_position = [1.0, 1.0, 2.0, 0.0]
     glLight(GL_LIGHT0, GL_POSITION, light_position)
-    glMaterialfv(GL_FRONT, GL_SPECULAR, [1., 1., 1., 1.])
-    glMaterialf(GL_FRONT, GL_SHININESS, 100.)
+    glMaterialfv(GL_FRONT, GL_SPECULAR, [1.0, 1.0, 1.0, 1.0])
+    glMaterialf(GL_FRONT, GL_SHININESS, 100.0)
 
     # initial state
     for k in [PERSPECTIVE, LIGHTING, TEXTURING]:
@@ -350,7 +363,8 @@ def init_opengl():
 
 # main #######################################################################
 
-def main(argv = None):
+
+def main(argv=None):
     if argv is None:
         argv = sys.argv
 

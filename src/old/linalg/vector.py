@@ -9,9 +9,10 @@ _sum = sum
 
 # globals ####################################################################
 
+
 def _zip_zero_pad(*ps):
     len_max = max(len(p) for p in ps)
-    ps = [tuple(p) + (0.,) * (len_max - len(p)) for p in ps]
+    ps = [tuple(p) + (0.0,) * (len_max - len(p)) for p in ps]
     for t in zip(*ps):
         yield t
 
@@ -23,7 +24,8 @@ _X, _Y, _Z = range(_3D)
 
 # vector #####################################################################
 
-def vector(p1 = _O, p0 = _O):
+
+def vector(p1=_O, p0=_O):
     return tuple(p1i - p0i for (p1i, p0i) in _zip_zero_pad(p1, p0))
 
 
@@ -35,7 +37,7 @@ def add(u, v):
     return tuple(ui + vi for (ui, vi) in _zip_zero_pad(u, v))
 
 
-def sum(u = vector(), *vs):
+def sum(u=vector(), *vs):
     for v in vs:
         u = add(u, v)
     return u
@@ -51,9 +53,11 @@ def dot(u, v):
 
 def cross(u, v):
     assert len(u) == len(v) == _3D
-    return (u[_Y] * v[_Z] - u[_Z] * v[_Y],
-            u[_Z] * v[_X] - u[_X] * v[_Z],
-            u[_X] * v[_Y] - u[_Y] * v[_X])
+    return (
+        u[_Y] * v[_Z] - u[_Z] * v[_Y],
+        u[_Z] * v[_X] - u[_X] * v[_Z],
+        u[_X] * v[_Y] - u[_Y] * v[_X],
+    )
 
 
 def norm(v):

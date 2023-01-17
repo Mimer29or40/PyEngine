@@ -1,132 +1,129 @@
 import time
 
-import pygame
 import OpenGL.GL as GL
-
-from util import *
+import pygame
+from camera import Camera
 from model import *
 from shader import Shader
-from camera import Camera
+from util import *
 
+QUIT = "Quit"
+ACTIVE_EVENT = "ActiveEvent"
 
-QUIT = 'Quit'
-ACTIVE_EVENT = 'ActiveEvent'
+KEY_DOWN = "KeyDown"
+KEY_UP = "KeyUp"
+KEY_HOLD = "KeyHold"
+KEY_PRESSED = "KeyPressed"
 
-KEY_DOWN = 'KeyDown'
-KEY_UP = 'KeyUp'
-KEY_HOLD = 'KeyHold'
-KEY_PRESSED = 'KeyPressed'
+MOUSE_BUTTON_DOWN = "MouseButtonDown"
+MOUSE_BUTTON_UP = "MouseButtonUp"
+MOUSE_BUTTON_HOLD = "MouseButtonHold"
+MOUSE_BUTTON_PRESSED = "MouseButtonPressed"
+MOUSE_MOTION = "MouseMotion"
+MOUSE_DRAGGED = "MouseDragged"
+MOUSE_SCROLL = "MouseScroll"
 
-MOUSE_BUTTON_DOWN = 'MouseButtonDown'
-MOUSE_BUTTON_UP = 'MouseButtonUp'
-MOUSE_BUTTON_HOLD = 'MouseButtonHold'
-MOUSE_BUTTON_PRESSED = 'MouseButtonPressed'
-MOUSE_MOTION = 'MouseMotion'
-MOUSE_DRAGGED = 'MouseDragged'
-MOUSE_SCROLL = 'MouseScroll'
+JOY_AXIS_MOTION = "JoyAxisMotion"
+JOY_BALL_MOTION = "JoyBallMotion"
+JOY_HAT_MOTION = "JoyHatMotion"
+JOY_BUTTON_DOWN = "JoyButtonDown"
+JOY_BUTTON_UP = "JoyButtonUp"
 
-JOY_AXIS_MOTION = 'JoyAxisMotion'
-JOY_BALL_MOTION = 'JoyBallMotion'
-JOY_HAT_MOTION = 'JoyHatMotion'
-JOY_BUTTON_DOWN = 'JoyButtonDown'
-JOY_BUTTON_UP = 'JoyButtonUp'
+VIDEO_RESIZE = "VideoResize"
+VIDEO_EXPOSE = "VideoExpose"
 
-VIDEO_RESIZE = 'VideoResize'
-VIDEO_EXPOSE = 'VideoExpose'
-
-USER_EVENT = 'UserEvent'
+USER_EVENT = "UserEvent"
 
 
 class Engine:
     def __init__(self, width, height):
         # pygame Stuff
         pygame.init()
-        
+
         self.width = width
         self.height = height
-        
+
         self.screen = pygame.display.set_mode(
-            (self.width, self.height),
-            pygame.DOUBLEBUF | pygame.OPENGL
+            (self.width, self.height), pygame.DOUBLEBUF | pygame.OPENGL
         )
-        
+
         # Engine Stuff
         self._tps_target = None
         self._tps = 0
         self._spt_target = 0
-        
+
         self._fps_target = None
         self._fps = 0
         self._spf_target = 0
-        
+
         self._start_time = -1
-        
+
         self._running = False
-        
+
         self._event_handlers = {}
         self.game_objects = []
-        
+
         # Render Stuff
         self.background = Color(0.15)
-        
-        self.shader = Shader('vert.glsl', 'frag.glsl')
-        
+
+        self.shader = Shader("vert.glsl", "frag.glsl")
+
         self.camera = Camera()
-        
+
         # Event Stuff
         self._keys = {}
         self._buttons = {}
-        
+
         self._mouse_pos = Vector([0, 0])
         self._mouse_pos_prev = Vector([0, 0])
-        
+
         self._scroll_dir = Vector([0, 0])
         self._scroll_dir_prev = Vector([0, 0])
-    
+
     # Engine Stuff
     @property
     def tps(self):
         return self._tps
-    
+
     @tps.setter
     def tps(self, tps):
         self._tps_target = tps
         self._spt_target = 0 if tps is None or tps < 1 else int(1e9 / tps)
-    
+
     @property
     def fps(self):
         return self._fps
-    
+
     @fps.setter
     def fps(self, fps):
         self._fps_target = fps
         self._spf_target = 0 if fps is None or fps < 1 else int(1e9 / fps)
-    
+
     @property
     def start_time(self):
         return self._start_time
-    
+
     @property
     def time(self):
         if self._start_time < 0:
             return 0
         return time.perf_counter_ns() - self._start_time
-    
+
     @property
     def running(self):
         return self._running
-    
+
     def start(self):
         try:
             self._start_time = time.perf_counter_ns()
             self._running = True
-            
+
             tick_count, frame_count = 0, 0
-            
+
             last_tick = self.time
             last_frame = self.time
             last_sec = self.time
-            
+
             while self._running:
                 for event in self._get_events():
                     if event.type == QUIT:
@@ -135,94 +132,84 @@ class Engine:
                         if e_type in self._event_handlers.keys():
                             for handler in self._event_handlers[e_type]:
                                 handler(event)
-                
+
                 t = self.time
                 dt = t - last_tick
                 if dt >= self._spt_target:
                     tick_count += 1
                     last_tick = t
-                    
+
                     t, dt = t / 1e9, dt / 1e9
                     for game_object in self.game_objects:
                         game_object.update(t, dt)
-                
+
                 t = self.time
                 dt = t - last_frame
                 if dt >= self._spf_target:
                     frame_count += 1
                     last_frame = t
-                    
+
                     self._render(t / 1e9, dt / 1e9)
-                
+
                 t = self.time
                 dt = t - last_sec
                 if dt >= 1e9:
                     last_sec = t
-                    
+
                     self._tps, self._fps = tick_count, frame_count
                     tick_count, frame_count = 0, 0
-            
+
         except Exception as e:
             # print(e)
             raise
-        
+
         finally:
             self.shutdown()
-    
+
     def stop(self):
         self._running = False
-    
+
     def _render(self, t, dt):
         GL.glClearColor(*self.background)
-        GL.glClear(
-            GL.GL_COLOR_BUFFER_BIT |
-            GL.GL_DEPTH_BUFFER_BIT |
-            GL.GL_STENCIL_BUFFER_BIT
-        )
-        
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT | GL.GL_STENCIL_BUFFER_BIT)
+
         # if self.debug:
-        GL.glPolygonMode(
-            GL.GL_FRONT_AND_BACK,
-            GL.GL_LINE
-        )
-        
+        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
+
         # self.lights.generateShadows(self.models.draw)
-        
+
         # Reset Viewpoint
         GL.glViewport(0, 0, self.width, self.height)
-        GL.glClear(
-            GL.GL_COLOR_BUFFER_BIT |
-            GL.GL_DEPTH_BUFFER_BIT
-        )
-        
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+
         a = self.width / self.height
-        
+
         self.shader.use()
-        self.shader.set_floatm('projection', self.camera.projection(a).data)
-        self.shader.set_floatm('view', self.camera.view().data)
-        
+        self.shader.set_floatm("projection", self.camera.projection(a).data)
+        self.shader.set_floatm("view", self.camera.view().data)
+
         # self.shader.setVec3f("viewPos", self.camera.position)
-        
+
         # self.lights.bind(self.shader)
-        
+
         for game_object in self.game_objects:
             game_object.render(self.shader, t, dt)
-        
+
         # self.lights.unbind()
-        
+
         # deltaTimeText = str(self.deltaTime / 1000)
         # self.font.draw(deltaTimeText, 5, 40)
-        
+
         # for i in range(len(self.drawTextOnScreenMethods)):
-            # self.drawTextOnScreenMethods[i](self.font)
-        
+        # self.drawTextOnScreenMethods[i](self.font)
+
         pygame.display.flip()
-    
+
     def shutdown(self):
         pygame.quit()
-    
+
     # Event Stuff
-    def event_handler(self, func = None, *, event = None):
+    def event_handler(self, func=None, *, event=None):
         def decorator(func):
             try:
                 self._event_handlers[event].append(func)
@@ -230,27 +217,28 @@ class Engine:
                 self._event_handlers[event] = []
                 self._event_handlers[event].append(func)
             return func
+
         return decorator if func is None else decorator(func)
-    
+
     @property
-    def mouse_pos(self):    
+    def mouse_pos(self):
         return self._mouse_pos.copy()
-    
+
     @property
-    def scroll_dir(self):    
+    def scroll_dir(self):
         return self._scroll_dir.copy()
-    
+
     def key_down(self, key):
         return key in self._keys.keys()
-    
+
     def button_down(self, button):
         return button in self._buttons.keys()
-    
+
     def _get_events(self):
         events = []
-        
+
         now = time.perf_counter_ns()
-        
+
         for e in pygame.event.get():
             if e.type == pygame.KEYDOWN:
                 k = e.key
@@ -275,109 +263,100 @@ class Engine:
             elif e.type == pygame.MOUSEMOTION:
                 self._mouse_pos = Vector(e.pos)
             else:
-                events.append(_Event(
-                    pygame.event.event_name(e.type),
-                    now,
-                    **e.__dict__
-                ))
-        
+                events.append(_Event(pygame.event.event_name(e.type), now, **e.__dict__))
+
         for k, d in self._keys.copy().items():
             if d.down:
-                events.append(_Event(KEY_DOWN, now, key = k, mod = d.mod))
+                events.append(_Event(KEY_DOWN, now, key=k, mod=d.mod))
                 self._keys[k].down = False
             else:
-                events.append(_Event(KEY_HOLD, now, key = k, mod = d.mod))
+                events.append(_Event(KEY_HOLD, now, key=k, mod=d.mod))
             if d.up:
                 if now - d.time < 1e9 / 5:
-                    events.append(_Event(KEY_PRESSED, now, key = k, mod = d.mod))
-                events.append(_Event(KEY_UP, now, key = k, mod = d.mod))
+                    events.append(_Event(KEY_PRESSED, now, key=k, mod=d.mod))
+                events.append(_Event(KEY_UP, now, key=k, mod=d.mod))
                 del self._keys[k]
-        
+
         for b, d in self._buttons.copy().items():
             if self._mouse_pos != self._mouse_pos_prev:
-                events.append(_Event(
-                    MOUSE_DRAGGED, now,
-                    button = b,
-                    pos = self._mouse_pos,
-                    rel = self._mouse_pos - self._mouse_pos_prev
-                ))
+                events.append(
+                    _Event(
+                        MOUSE_DRAGGED,
+                        now,
+                        button=b,
+                        pos=self._mouse_pos,
+                        rel=self._mouse_pos - self._mouse_pos_prev,
+                    )
+                )
             if d.down:
-                events.append(_Event(
-                    MOUSE_BUTTON_DOWN, now,
-                    button = b,
-                    pos = Vector(d.pos)
-                ))
+                events.append(_Event(MOUSE_BUTTON_DOWN, now, button=b, pos=Vector(d.pos)))
                 self._buttons[b].down = False
             else:
-                events.append(_Event(
-                    MOUSE_BUTTON_HOLD, now,
-                    button = b,
-                    pos = Vector(d.pos)
-                ))
+                events.append(_Event(MOUSE_BUTTON_HOLD, now, button=b, pos=Vector(d.pos)))
             if d.up:
                 if now - d.time < 1e9 / 5:
-                    events.append(_Event(
-                        MOUSE_BUTTON_PRESSED, now,
-                        button = b,
-                        pos = Vector(d.pos)
-                    ))
-                events.append(_Event(
-                    MOUSE_BUTTON_UP, now,
-                    button = b,
-                    pos = Vector(d.pos)
-                ))
+                    events.append(_Event(MOUSE_BUTTON_PRESSED, now, button=b, pos=Vector(d.pos)))
+                events.append(_Event(MOUSE_BUTTON_UP, now, button=b, pos=Vector(d.pos)))
                 del self._buttons[b]
-        
+
         if self._mouse_pos != self._mouse_pos_prev:
-            events.append(_Event(
-                MOUSE_MOTION, now,
-                pos = self._mouse_pos,
-                rel = self._mouse_pos - self._mouse_pos_prev
-            ))
+            events.append(
+                _Event(
+                    MOUSE_MOTION,
+                    now,
+                    pos=self._mouse_pos,
+                    rel=self._mouse_pos - self._mouse_pos_prev,
+                )
+            )
             self._mouse_pos_prev = self._mouse_pos.copy()
-        
+
         if self._scroll_dir != self._scroll_dir_prev:
-            events.append(_Event(
-                MOUSE_SCROLL, now,
-                pos = self._scroll_dir,
-                rel = self._scroll_dir - self._scroll_dir_prev
-            ))
+            events.append(
+                _Event(
+                    MOUSE_SCROLL,
+                    now,
+                    pos=self._scroll_dir,
+                    rel=self._scroll_dir - self._scroll_dir_prev,
+                )
+            )
             self._scroll_dir_prev = self._scroll_dir.copy()
-        
+
         return events
 
 
 class GameObject:
     def __init__(self, name):
         self.name = name
-        
+
         self.position = util.ORIGIN.copy()
         self.rotation = util.IDEN3.copy()
         self.scale = util.ONES.copy()
-        
+
         self._transformation = util.IDEN4.copy()
-        
+
         self.model = None
-        
+
         self.children = []
-    
+
     def update(self, t, dt):
-        self._transformation = util.Matrix([
-            [*(self.rotation.data[0] * self.scale.x), 0.],
-            [*(self.rotation.data[1] * self.scale.y), 0.],
-            [*(self.rotation.data[2] * self.scale.z), 0.],
-            [*self.position.data, 1.]
-        ])
-        
+        self._transformation = util.Matrix(
+            [
+                [*(self.rotation.data[0] * self.scale.x), 0.0],
+                [*(self.rotation.data[1] * self.scale.y), 0.0],
+                [*(self.rotation.data[2] * self.scale.z), 0.0],
+                [*self.position.data, 1.0],
+            ]
+        )
+
         for child in self.children:
             child.update(t, dt)
-    
+
     def render(self, shader, t, dt):
         if self.model is not None:
-            shader.set_floatm('model', self._transformation.data)
-            
+            shader.set_floatm("model", self._transformation.data)
+
             self.model.draw(shader)
-        
+
         for child in self.children:
             child.render(shader, t, dt)
 
@@ -388,10 +367,10 @@ class _Event:
         self.time = time
         for key, value in kwargs.items():
             setattr(self, key, value)
-    
+
     def __repr__(self):
-        attrs = ['{}={}'.format(k, d) for k, d in self.__dict__.items() if k != 'type']
-        return 'Event.{}<{}>'.format(self.type, ' '.join(attrs))
+        attrs = ["{}={}".format(k, d) for k, d in self.__dict__.items() if k != "type"]
+        return "Event.{}<{}>".format(self.type, " ".join(attrs))
 
 
 class _KeyData:
@@ -402,10 +381,10 @@ class _KeyData:
         self.scancode = scancode
         self.down = True
         self.up = False
-    
+
     def __repr__(self):
-        attrs = ['{}={}'.format(k, d) for k, d in self.__dict__.items()]
-        return '{}<{}>'.format(self.__class__.__name__, ' '.join(attrs))
+        attrs = ["{}={}".format(k, d) for k, d in self.__dict__.items()]
+        return "{}<{}>".format(self.__class__.__name__, " ".join(attrs))
 
 
 class _ButtonData:
@@ -414,7 +393,7 @@ class _ButtonData:
         self.pos = pos
         self.down = True
         self.up = False
-    
+
     def __repr__(self):
-        attrs = ['{}={}'.format(k, d) for k, d in self.__dict__.items()]
-        return '{}<{}>'.format(self.__class__.__name__, ' '.join(attrs))
+        attrs = ["{}={}".format(k, d) for k, d in self.__dict__.items()]
+        return "{}<{}>".format(self.__class__.__name__, " ".join(attrs))

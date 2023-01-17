@@ -6,5 +6,3 @@ class PixelGameEngine:
         self.app_name = app_name
         if seed is None:
             random.seed(seed)
-        
-        

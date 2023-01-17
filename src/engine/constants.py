@@ -1,8 +1,7 @@
 import os
 
-import pygame
 import numpy as np
-
+import pygame
 
 _next_id = 1
 
@@ -10,7 +9,7 @@ _next_id = 1
 def _add_constants(constants):
     global _next_id
     out = []
-    for c in constants.split(','):
+    for c in constants.split(","):
         try:
             value = globals()[c]
         except KeyError:
@@ -25,10 +24,10 @@ class _Constant(int):
         constant = super().__new__(cls, id)
         constant._name = name
         return constant
-    
+
     def __repr__(self):
-        return '{} {}'.format(self._name, super().__repr__())
-    
+        return "{} {}".format(self._name, super().__repr__())
+
     def __str__(self):
         return self._name
 
@@ -42,41 +41,25 @@ def _from_env(*names):
     return False
 
 
-MOUSE_BUTTONS = (
-    LEFT, CENTER, RIGHT
-) = _add_constants('LEFT,CENTER,RIGHT')
+MOUSE_BUTTONS = (LEFT, CENTER, RIGHT) = _add_constants("LEFT,CENTER,RIGHT")
 
-MOUSE_WHEEL_BUTTONS = (
-    UP, DOWN
-) = _add_constants('UP,DOWN')
+MOUSE_WHEEL_BUTTONS = (UP, DOWN) = _add_constants("UP,DOWN")
 
-RECT_MODES = (
-    CORNER, CORNERS, RADIUS, CENTER
-) = _add_constants('CORNER,CORNERS,RADIUS,CENTER')
+RECT_MODES = (CORNER, CORNERS, RADIUS, CENTER) = _add_constants("CORNER,CORNERS,RADIUS,CENTER")
 
-ELLIPSE_MODES = (
-    RADIUS, CENTER, CORNER, CORNERS
-) = _add_constants('RADIUS,CENTER,CORNER,CORNERS')
+ELLIPSE_MODES = (RADIUS, CENTER, CORNER, CORNERS) = _add_constants("RADIUS,CENTER,CORNER,CORNERS")
 
-ARC_MODES = (
-    OPEN, CHORD, PIE
-) = _add_constants('OPEN,CHORD,PIE')
+ARC_MODES = (OPEN, CHORD, PIE) = _add_constants("OPEN,CHORD,PIE")
 
-TEXT_ALIGN_H = (
-    LEFT, CENTER, RIGHT
-) = _add_constants('LEFT,CENTER,RIGHT')
+TEXT_ALIGN_H = (LEFT, CENTER, RIGHT) = _add_constants("LEFT,CENTER,RIGHT")
 
-TEXT_ALIGN_V = (
-    TOP, CENTER, BOTTOM
-) = _add_constants('TOP,CENTER,BOTTOM')
+TEXT_ALIGN_V = (TOP, CENTER, BOTTOM) = _add_constants("TOP,CENTER,BOTTOM")
 
-PROJECTIONS = (
-    ORTHOGRAPHIC, PERSPECTIVE
-) = _add_constants('ORTHOGRAPHIC,PERSPECTIVE')
+PROJECTIONS = (ORTHOGRAPHIC, PERSPECTIVE) = _add_constants("ORTHOGRAPHIC,PERSPECTIVE")
 
-RENDERERS = (
-    PYGAME1, OPENGL1, PYGAME2, OPENGL2, PYGAME3, OPENGL3
-) = _add_constants('PYGAME1,OPENGL1,PYGAME2,OPENGL2,PYGAME3,OPENGL3')
+RENDERERS = (PYGAME1, OPENGL1, PYGAME2, OPENGL2, PYGAME3, OPENGL3) = _add_constants(
+    "PYGAME1,OPENGL1,PYGAME2,OPENGL2,PYGAME3,OPENGL3"
+)
 PYGAME, OPENGL = PYGAME3, OPENGL3
 
 MOD_SHIFT, MOD_CTRL, MOD_ALT, MOD_META = 1, 2, 4, 8
@@ -91,11 +74,11 @@ MOD_DICT = {
     pygame.K_RMETA: MOD_META,
     pygame.K_LMETA: MOD_META,
     pygame.K_RSUPER: MOD_META,
-    pygame.K_LSUPER: MOD_META
+    pygame.K_LSUPER: MOD_META,
 }
 
 PI = np.pi
 TWO_PI = np.pi * 2.0
 
-DEBUG_EVENTS = _from_env('ENGINE_DEBUG', 'ENGINE_DEBUG_EVENTS')
-DEBUG_RENDER = _from_env('ENGINE_DEBUG', 'ENGINE_DEBUG_RENDER')
+DEBUG_EVENTS = _from_env("ENGINE_DEBUG", "ENGINE_DEBUG_EVENTS")
+DEBUG_RENDER = _from_env("ENGINE_DEBUG", "ENGINE_DEBUG_RENDER")

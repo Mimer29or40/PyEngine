@@ -47,9 +47,9 @@ def random_seed(seed):
 
 def random(lower=None, upper=None):
     if lower is None:
-        lower = 1.
+        lower = 1.0
     if upper is None:
-        lower, upper = 0., lower
+        lower, upper = 0.0, lower
     try:
         lower_len = len(lower)
     except TypeError:

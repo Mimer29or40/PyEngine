@@ -1,10 +1,9 @@
 from functools import wraps
 
-from engine import *
-from engine.gl import *
-
 from OpenGL.GL import *
 
+from engine import *
+from engine.gl import *
 
 X = Vector(1, 0, 0)
 Y = Vector(0, 1, 0)
@@ -21,16 +20,18 @@ def get_renderer(renderer):
     elif renderer == OPENGL3:
         return RenderOpenGL3()
     else:
-        raise Exception(f'incorrect renderer {renderer}')
+        raise Exception(f"incorrect renderer {renderer}")
 
 
 def not_supported(func):
     func.run = True
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         if func.run:
-            print(f'{func.__name__} is not supported for this renderer')
+            print(f"{func.__name__} is not supported for this renderer")
             func.run = False
+
     return wrapper
 
 
@@ -56,7 +57,7 @@ class Renderer:
     def translate(self, amount):
         self.view.translate(amount, 1)
 
-    def rotate(self, angle, axis = None):
+    def rotate(self, angle, axis=None):
         if axis is None:
             self.view.rotate(Z, angle)
         else:
@@ -79,10 +80,10 @@ class Renderer:
 
     def line(self, engine, p1, p2):
         pass
-    
+
     def lines(self, engine, *points):
         pass
-    
+
     def polygon(self, engine, *points):
         pass
 
@@ -100,13 +101,13 @@ class Renderer:
 
     def text(self, engine, text, pos):
         pass
-    
+
     def load_pixels(self, engine):
         size = (engine.height, engine.width, 4)
-        arr = np.zeros(size, dtype = np.uint8)
+        arr = np.zeros(size, dtype=np.uint8)
         arr[:, :, 3] = 255
         return arr
-    
+
     def update_pixels(self, engine):
         pass
 
@@ -123,18 +124,15 @@ class RenderPygame(Renderer):
 
     def before_draw(self, engine):
         self.view[:] = np.identity(4)
-    
+
     def load_pixels(self, engine):
         size = (engine.height, engine.width, 4)
         buf = pygame.display.get_surface().get_buffer().raw
-        return np.frombuffer(buf, dtype = np.uint8).reshape(size).copy()
-    
+        return np.frombuffer(buf, dtype=np.uint8).reshape(size).copy()
+
     def update_pixels(self, engine):
         pygame.display.get_surface().blit(
-            pygame.surfarray.make_surface(
-                np.swapaxes(engine.pixels[:, :, :3], 0, 1)
-            ),
-            (0, 0)
+            pygame.surfarray.make_surface(np.swapaxes(engine.pixels[:, :, :3], 0, 1)), (0, 0)
         )
 
 
@@ -145,14 +143,14 @@ class RenderPygame1(RenderPygame):
     rotate_y = not_supported(RenderPygame.rotate_y)
     rotate_z = not_supported(RenderPygame.rotate_z)
     scale = not_supported(RenderPygame.scale)
-    
+
     def point(self, engine, p):
         if not engine.stroke.is_none:
             pygame.draw.circle(
                 pygame.display.get_surface(),
                 engine.stroke,
                 p.base.astype(int).xy,
-                int(engine.weight)
+                int(engine.weight),
             )
 
     def line(self, engine, p1, p2):
@@ -162,9 +160,9 @@ class RenderPygame1(RenderPygame):
                 engine.stroke,
                 p1.base.astype(int).xy,
                 p2.base.astype(int).xy,
-                int(engine.weight)
+                int(engine.weight),
             )
-    
+
     def lines(self, engine, *points):
         if not engine.stroke.is_none:
             pygame.draw.lines(
@@ -172,25 +170,18 @@ class RenderPygame1(RenderPygame):
                 engine.stroke,
                 False,
                 [p.base.astype(int).xy for p in points],
-                int(engine.weight)
+                int(engine.weight),
             )
-    
+
     def polygon(self, engine, *points):
         if not engine.fill.is_none or not engine.stroke.is_none:
             points = [p.base.astype(int).xy for p in points]
-            
+
             if not engine.fill.is_none:
-                pygame.draw.polygon(
-                    pygame.display.get_surface(),
-                    engine.fill,
-                    points
-                )
+                pygame.draw.polygon(pygame.display.get_surface(), engine.fill, points)
             if not engine.stroke.is_none:
                 pygame.draw.polygon(
-                    pygame.display.get_surface(),
-                    engine.stroke,
-                    points,
-                    int(engine.weight)
+                    pygame.display.get_surface(), engine.stroke, points, int(engine.weight)
                 )
 
     def triangle(self, engine, p1, p2, p3):
@@ -212,21 +203,14 @@ class RenderPygame1(RenderPygame):
                 pass
             elif engine.ellipse_mode == CORNERS:
                 size.xyz -= top_left.xyz
-            
+
             rect = [*top_left.astype(int).xy, *size.astype(int).xy]
-            
+
             if not engine.fill.is_none:
-                pygame.draw.ellipse(
-                    pygame.display.get_surface(),
-                    engine.fill,
-                    rect
-                )
+                pygame.draw.ellipse(pygame.display.get_surface(), engine.fill, rect)
             if not engine.stroke.is_none:
                 pygame.draw.ellipse(
-                    pygame.display.get_surface(),
-                    engine.stroke,
-                    rect,
-                    int(engine.weight)
+                    pygame.display.get_surface(), engine.stroke, rect, int(engine.weight)
                 )
 
     def arc(self, engine, p1, p2, start, stop):
@@ -242,17 +226,11 @@ class RenderPygame1(RenderPygame):
                 pass
             elif engine.ellipse_mode == CORNERS:
                 size.xyz -= top_left.xyz
-            
+
             rect = [*top_left.astype(int).xy, *size.astype(int).xy]
-            
+
             if not engine.fill.is_none:
-                pygame.draw.arc(
-                    pygame.display.get_surface(),
-                    engine.fill,
-                    rect,
-                    start,
-                    stop
-                )
+                pygame.draw.arc(pygame.display.get_surface(), engine.fill, rect, start, stop)
             if not engine.stroke.is_none:
                 pygame.draw.arc(
                     pygame.display.get_surface(),
@@ -260,33 +238,30 @@ class RenderPygame1(RenderPygame):
                     rect,
                     start,
                     stop,
-                    int(engine.weight)
+                    int(engine.weight),
                 )
 
     def text(self, engine, text, pos):
         surf = engine._font.render(str(text), True, engine.fill)
-        
+
         w, h = surf.get_size()
         top_left = pos.base
-        
+
         if engine.text_align[0] == LEFT:
             pass
         elif engine.text_align[0] == CENTER:
             top_left.x -= w * 0.5
         elif engine.text_align[0] == RIGHT:
             top_left.x -= w
-        
+
         if engine.text_align[1] == TOP:
             pass
         elif engine.text_align[1] == CENTER:
             top_left.y -= h * 0.5
         elif engine.text_align[1] == BOTTOM:
             top_left.y -= h
-        
-        pygame.display.get_surface().blit(
-            surf,
-            top_left.astype(int).xy
-        )
+
+        pygame.display.get_surface().blit(surf, top_left.astype(int).xy)
 
 
 class RenderPygame3(RenderPygame):
@@ -296,7 +271,7 @@ class RenderPygame3(RenderPygame):
                 pygame.display.get_surface(),
                 engine.stroke,
                 (p.base @ self.view).astype(int).xy,
-                int(engine.weight)
+                int(engine.weight),
             )
 
     def line(self, engine, p1, p2):
@@ -306,9 +281,9 @@ class RenderPygame3(RenderPygame):
                 engine.stroke,
                 (p1.base @ self.view).astype(int).xy,
                 (p2.base @ self.view).astype(int).xy,
-                int(engine.weight)
+                int(engine.weight),
             )
-    
+
     def lines(self, engine, *points):
         if not engine.stroke.is_none:
             pygame.draw.lines(
@@ -316,25 +291,18 @@ class RenderPygame3(RenderPygame):
                 engine.stroke,
                 False,
                 [(p.base @ self.view).astype(int).xy for p in points],
-                int(engine.weight)
+                int(engine.weight),
             )
-    
+
     def polygon(self, engine, *points):
         if not engine.fill.is_none or not engine.stroke.is_none:
             points = [(p.base @ self.view).astype(int).xy for p in points]
-            
+
             if not engine.fill.is_none:
-                pygame.draw.polygon(
-                    pygame.display.get_surface(),
-                    engine.fill,
-                    points
-                )
+                pygame.draw.polygon(pygame.display.get_surface(), engine.fill, points)
             if not engine.stroke.is_none:
                 pygame.draw.polygon(
-                    pygame.display.get_surface(),
-                    engine.stroke,
-                    points,
-                    int(engine.weight)
+                    pygame.display.get_surface(), engine.stroke, points, int(engine.weight)
                 )
 
     def triangle(self, engine, p1, p2, p3):
@@ -356,24 +324,14 @@ class RenderPygame3(RenderPygame):
                 pass
             elif engine.ellipse_mode == CORNERS:
                 size.xyz -= top_left.xyz
-            
-            rect = [
-                *(top_left @ self.view).astype(int).xy,
-                *(size @ self.view).astype(int).xy
-            ]
-            
+
+            rect = [*(top_left @ self.view).astype(int).xy, *(size @ self.view).astype(int).xy]
+
             if not engine.fill.is_none:
-                pygame.draw.ellipse(
-                    pygame.display.get_surface(),
-                    engine.fill,
-                    rect
-                )
+                pygame.draw.ellipse(pygame.display.get_surface(), engine.fill, rect)
             if not engine.stroke.is_none:
                 pygame.draw.ellipse(
-                    pygame.display.get_surface(),
-                    engine.stroke,
-                    rect,
-                    int(engine.weight)
+                    pygame.display.get_surface(), engine.stroke, rect, int(engine.weight)
                 )
 
     def arc(self, engine, p1, p2, start, stop):
@@ -389,20 +347,11 @@ class RenderPygame3(RenderPygame):
                 pass
             elif engine.ellipse_mode == CORNERS:
                 size.xyz -= top_left.xyz
-            
-            rect = [
-                *(top_left @ self.view).astype(int).xy,
-                *(size @ self.view).astype(int).xy
-            ]
-            
+
+            rect = [*(top_left @ self.view).astype(int).xy, *(size @ self.view).astype(int).xy]
+
             if not engine.fill.is_none:
-                pygame.draw.arc(
-                    pygame.display.get_surface(),
-                    engine.fill,
-                    rect,
-                    start,
-                    stop
-                )
+                pygame.draw.arc(pygame.display.get_surface(), engine.fill, rect, start, stop)
             if not engine.stroke.is_none:
                 pygame.draw.arc(
                     pygame.display.get_surface(),
@@ -410,41 +359,38 @@ class RenderPygame3(RenderPygame):
                     rect,
                     start,
                     stop,
-                    int(engine.weight)
+                    int(engine.weight),
                 )
 
     def text(self, engine, text, pos):
         surf = engine._font.render(str(text), True, engine.fill)
-        
+
         w, h = surf.get_size()
         top_left = pos.base
-        
+
         if engine.text_align[0] == LEFT:
             pass
         elif engine.text_align[0] == CENTER:
             top_left.x -= w * 0.5
         elif engine.text_align[0] == RIGHT:
             top_left.x -= w
-        
+
         if engine.text_align[1] == TOP:
             pass
         elif engine.text_align[1] == CENTER:
             top_left.y -= h * 0.5
         elif engine.text_align[1] == BOTTOM:
             top_left.y -= h
-        
-        pygame.display.get_surface().blit(
-            surf,
-            (top_left @ self.view).astype(int).xy
-        )
+
+        pygame.display.get_surface().blit(surf, (top_left @ self.view).astype(int).xy)
 
 
 class RenderOpenGL(Renderer):
     def __init__(self):
         super().__init__()
-        
+
         self.proj = Matrix.identity(4)
-        
+
         self.pixel_shader, self.pixel_vertex = None, None
         self.pixel_texture = None
 
@@ -457,10 +403,10 @@ class RenderOpenGL(Renderer):
 
     def setup(self, engine):
         super().setup(engine)
-        
-        self.proj[0, 0] = 2. / engine.width
-        self.proj[1, 1] = 2. / engine.height
-        self.proj[2, 2] = 2. / max(engine.viewport * engine.viewport)
+
+        self.proj[0, 0] = 2.0 / engine.width
+        self.proj[1, 1] = 2.0 / engine.height
+        self.proj[2, 2] = 2.0 / max(engine.viewport * engine.viewport)
 
         if DEBUG_RENDER:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
@@ -468,40 +414,36 @@ class RenderOpenGL(Renderer):
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        
+
         self.pixel_shader, self.pixel_vertex = Shader(
-            (GL_VERTEX_SHADER, PIXEL_VERT3),
-            (GL_FRAGMENT_SHADER, PIXEL_FRAG3)
-        ), VertexArray('float32', 2)
+            (GL_VERTEX_SHADER, PIXEL_VERT3), (GL_FRAGMENT_SHADER, PIXEL_FRAG3)
+        ), VertexArray("float32", 2)
         self.pixel_vertex.set(
-            np.array([-1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0]),
-            GL_DYNAMIC_DRAW
+            np.array([-1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0]), GL_DYNAMIC_DRAW
         )
         self.pixel_texture = glGenTextures(1)
-    
+
     def before_draw(self, engine):
         x, y, z = Vector(1, 0, 0), Vector(0, -1, 0), Vector(0, 0, -1)
-        cam_z = (engine.height / 2.) / np.tan(np.pi / 3. / 2.)
+        cam_z = (engine.height / 2.0) / np.tan(np.pi / 3.0 / 2.0)
         pos = Vector(engine.width / 2, engine.height / 2, cam_z)
 
         self.view[:] = [
             [x.x, y.x, z.x, 0],
             [x.y, y.y, z.y, 0],
             [x.z, y.z, z.z, 0],
-            [-x.dot(pos), -y.dot(pos), -z.dot(pos), 1]
+            [-x.dot(pos), -y.dot(pos), -z.dot(pos), 1],
         ]
-    
+
     def load_pixels(self, engine):
         size = (engine.height, engine.width, 4)
         buf = glReadPixels(0, 0, *engine.viewport, GL_RGBA, GL_UNSIGNED_BYTE)
-        return np.flipud(np.frombuffer(buf, dtype = np.uint8).copy().reshape(size))
-    
+        return np.flipud(np.frombuffer(buf, dtype=np.uint8).copy().reshape(size))
+
     def update_pixels(self, engine):
         glBindTexture(GL_TEXTURE_2D, self.pixel_texture)
         glTexImage2D(
-            GL_TEXTURE_2D, 0, GL_RGBA,
-            *engine.viewport, 0, GL_RGBA,
-            GL_UNSIGNED_BYTE, engine.pixels
+            GL_TEXTURE_2D, 0, GL_RGBA, *engine.viewport, 0, GL_RGBA, GL_UNSIGNED_BYTE, engine.pixels
         )
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
 
@@ -510,11 +452,11 @@ class RenderOpenGL(Renderer):
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glActiveTexture(GL_TEXTURE0)
-        
+
         self.pixel_vertex.bind()
 
         self.pixel_shader.use()
-        self.pixel_shader.set_int('TextMap', 0)
+        self.pixel_shader.set_int("TextMap", 0)
 
         glDrawArrays(GL_QUADS, 0, 4)
 
@@ -524,9 +466,9 @@ class RenderOpenGL(Renderer):
 class RenderOpenGL2(RenderOpenGL):
     def __init__(self):
         super().__init__()
-        
+
         self.vertex = None
-        
+
         self.point_shader = None
         self.line_shader = None
         self.lines_shader = None
@@ -539,56 +481,49 @@ class RenderOpenGL2(RenderOpenGL):
         self.text_texture = 0
         self.pixel_shader = None
         self.pixel_texture = None
-    
+
     def setup(self, engine):
         super().setup(engine)
-        
-        self.vertex = VertexArray('float32', 3)
+
+        self.vertex = VertexArray("float32", 3)
         self.vertex.bind()
-        
+
         self.point_shader = Shader(
             (GL_VERTEX_SHADER, VERT2),
             (GL_GEOMETRY_SHADER, POINT_GEOM2),
-            (GL_FRAGMENT_SHADER, FRAG2)
+            (GL_FRAGMENT_SHADER, FRAG2),
         )
         self.line_shader = Shader(
-            (GL_VERTEX_SHADER, VERT2),
-            (GL_GEOMETRY_SHADER, LINE_GEOM2),
-            (GL_FRAGMENT_SHADER, FRAG2)
+            (GL_VERTEX_SHADER, VERT2), (GL_GEOMETRY_SHADER, LINE_GEOM2), (GL_FRAGMENT_SHADER, FRAG2)
         )
         self.lines_shader = Shader(
             (GL_VERTEX_SHADER, VERT2),
             (GL_GEOMETRY_SHADER, LINES_GEOM2),
-            (GL_FRAGMENT_SHADER, FRAG2)
+            (GL_FRAGMENT_SHADER, FRAG2),
         )
-        self.quad_shader = Shader(
-            (GL_VERTEX_SHADER, VERT2),
-            (GL_FRAGMENT_SHADER, FRAG2)
-        )
+        self.quad_shader = Shader((GL_VERTEX_SHADER, VERT2), (GL_FRAGMENT_SHADER, FRAG2))
         self.ellipse_shader = Shader(
             (GL_VERTEX_SHADER, VERT2),
             (GL_GEOMETRY_SHADER, ELLIPSE_GEOM2),
-            (GL_FRAGMENT_SHADER, FRAG2)
+            (GL_FRAGMENT_SHADER, FRAG2),
         )
         self.ellipse_outline_shader = Shader(
             (GL_VERTEX_SHADER, VERT2),
             (GL_GEOMETRY_SHADER, ELLIPSE_OUTLINE_GEOM2),
-            (GL_FRAGMENT_SHADER, FRAG2)
+            (GL_FRAGMENT_SHADER, FRAG2),
         )
         self.arc_shader = Shader(
-            (GL_VERTEX_SHADER, VERT2),
-            (GL_GEOMETRY_SHADER, ARC_GEOM2),
-            (GL_FRAGMENT_SHADER, FRAG2)
+            (GL_VERTEX_SHADER, VERT2), (GL_GEOMETRY_SHADER, ARC_GEOM2), (GL_FRAGMENT_SHADER, FRAG2)
         )
         self.arc_outline_shader = Shader(
             (GL_VERTEX_SHADER, VERT2),
             (GL_GEOMETRY_SHADER, ARC_OUTLINE_GEOM2),
-            (GL_FRAGMENT_SHADER, FRAG2)
+            (GL_FRAGMENT_SHADER, FRAG2),
         )
         self.text_shader = Shader(
             (GL_VERTEX_SHADER, VERT2),
             (GL_GEOMETRY_SHADER, TEXT_GEOM2),
-            (GL_FRAGMENT_SHADER, TEXT_FRAG2)
+            (GL_FRAGMENT_SHADER, TEXT_FRAG2),
         )
         self.texture_id = glGenTextures(1)
 
@@ -597,24 +532,22 @@ class RenderOpenGL2(RenderOpenGL):
             self.vertex.set(p.base.xyz, GL_DYNAMIC_DRAW)
 
             self.point_shader.use()
-            self.point_shader.set_floatm('pv', self.view @ self.proj)
-            self.point_shader.set_floatv('color', engine.stroke.to_gl())
-            self.point_shader.set_floatv('viewport', engine.viewport)
-            self.point_shader.set_float('thickness', engine.weight)
+            self.point_shader.set_floatm("pv", self.view @ self.proj)
+            self.point_shader.set_floatv("color", engine.stroke.to_gl())
+            self.point_shader.set_floatv("viewport", engine.viewport)
+            self.point_shader.set_float("thickness", engine.weight)
 
             glDrawArrays(GL_POINTS, 0, 1)
 
     def line(self, engine, p1, p2):
         if not engine.stroke.is_none:
-            self.vertex.set(np.array([
-                *p1.base.xyz, *p2.base.xyz
-            ]), GL_DYNAMIC_DRAW)
+            self.vertex.set(np.array([*p1.base.xyz, *p2.base.xyz]), GL_DYNAMIC_DRAW)
 
             self.line_shader.use()
-            self.line_shader.set_floatm('pv', self.view @ self.proj)
-            self.line_shader.set_floatv('color', engine.stroke.to_gl())
-            self.line_shader.set_float('thickness', engine.weight)
-            self.line_shader.set_floatv('viewport', engine.viewport)
+            self.line_shader.set_floatm("pv", self.view @ self.proj)
+            self.line_shader.set_floatv("color", engine.stroke.to_gl())
+            self.line_shader.set_float("thickness", engine.weight)
+            self.line_shader.set_floatv("viewport", engine.viewport)
 
             glDrawArrays(GL_LINES, 0, 2)
 
@@ -628,68 +561,90 @@ class RenderOpenGL2(RenderOpenGL):
             self.vertex.set(np.array(data), GL_DYNAMIC_DRAW)
 
             self.line_shader.use()
-            self.line_shader.set_floatm('pv', self.view @ self.proj)
-            self.line_shader.set_floatv('color', engine.stroke.to_gl())
-            self.line_shader.set_float('thickness', engine.weight)
-            self.line_shader.set_floatv('viewport', engine.viewport)
+            self.line_shader.set_floatm("pv", self.view @ self.proj)
+            self.line_shader.set_floatv("color", engine.stroke.to_gl())
+            self.line_shader.set_float("thickness", engine.weight)
+            self.line_shader.set_floatv("viewport", engine.viewport)
 
             glDrawArrays(GL_TRIANGLES, 0, len(points) * 3)
-    
+
     def triangle(self, engine, p1, p2, p3):
         if not engine.fill.is_none:
-            self.vertex.set(np.array([
-                *p1.base.xyz, *p2.base.xyz, *p3.base.xyz
-            ]), GL_DYNAMIC_DRAW)
+            self.vertex.set(np.array([*p1.base.xyz, *p2.base.xyz, *p3.base.xyz]), GL_DYNAMIC_DRAW)
 
             self.quad_shader.use()
-            self.quad_shader.set_floatm('pv', self.view @ self.proj)
-            self.quad_shader.set_floatv('color', engine.fill.to_gl())
+            self.quad_shader.set_floatm("pv", self.view @ self.proj)
+            self.quad_shader.set_floatv("color", engine.fill.to_gl())
 
             glDrawArrays(GL_TRIANGLES, 0, 3)
 
         if not engine.stroke.is_none:
-            self.vertex.set(np.array([
-                *p1.base.xyz, *p2.base.xyz, *p3.base.xyz,
-                *p2.base.xyz, *p3.base.xyz, *p1.base.xyz,
-                *p3.base.xyz, *p1.base.xyz, *p2.base.xyz
-            ]), GL_DYNAMIC_DRAW)
+            self.vertex.set(
+                np.array(
+                    [
+                        *p1.base.xyz,
+                        *p2.base.xyz,
+                        *p3.base.xyz,
+                        *p2.base.xyz,
+                        *p3.base.xyz,
+                        *p1.base.xyz,
+                        *p3.base.xyz,
+                        *p1.base.xyz,
+                        *p2.base.xyz,
+                    ]
+                ),
+                GL_DYNAMIC_DRAW,
+            )
 
             self.lines_shader.use()
-            self.lines_shader.set_floatm('pv', self.view @ self.proj)
-            self.lines_shader.set_floatv('color', engine.stroke.to_gl())
-            self.lines_shader.set_floatv('viewport', engine.viewport)
-            self.lines_shader.set_float('thickness', engine.weight)
+            self.lines_shader.set_floatm("pv", self.view @ self.proj)
+            self.lines_shader.set_floatv("color", engine.stroke.to_gl())
+            self.lines_shader.set_floatv("viewport", engine.viewport)
+            self.lines_shader.set_float("thickness", engine.weight)
 
             glDrawArrays(GL_TRIANGLES, 0, 9)
 
     def quad(self, engine, p1, p2, p3, p4):
         if not engine.fill.is_none:
-            self.vertex.set(np.array([
-                *p1.base.xyz, *p2.base.xyz, *p3.base.xyz, *p4.base.xyz
-            ]), GL_DYNAMIC_DRAW)
+            self.vertex.set(
+                np.array([*p1.base.xyz, *p2.base.xyz, *p3.base.xyz, *p4.base.xyz]), GL_DYNAMIC_DRAW
+            )
 
             self.quad_shader.use()
-            self.quad_shader.set_floatm('pv', self.view @ self.proj)
-            self.quad_shader.set_floatv('color', engine.fill.to_gl())
+            self.quad_shader.set_floatm("pv", self.view @ self.proj)
+            self.quad_shader.set_floatv("color", engine.fill.to_gl())
 
             glDrawArrays(GL_QUADS, 0, 4)
 
         if not engine.stroke.is_none:
-            self.vertex.set(np.array([
-                *p4.base.xyz, *p1.base.xyz, *p2.base.xyz,
-                *p1.base.xyz, *p2.base.xyz, *p3.base.xyz,
-                *p2.base.xyz, *p3.base.xyz, *p4.base.xyz,
-                *p3.base.xyz, *p4.base.xyz, *p1.base.xyz
-            ]), GL_DYNAMIC_DRAW)
+            self.vertex.set(
+                np.array(
+                    [
+                        *p4.base.xyz,
+                        *p1.base.xyz,
+                        *p2.base.xyz,
+                        *p1.base.xyz,
+                        *p2.base.xyz,
+                        *p3.base.xyz,
+                        *p2.base.xyz,
+                        *p3.base.xyz,
+                        *p4.base.xyz,
+                        *p3.base.xyz,
+                        *p4.base.xyz,
+                        *p1.base.xyz,
+                    ]
+                ),
+                GL_DYNAMIC_DRAW,
+            )
 
             self.lines_shader.use()
-            self.lines_shader.set_floatm('pv', self.view @ self.proj)
-            self.lines_shader.set_floatv('color', engine.stroke.to_gl())
-            self.lines_shader.set_floatv('viewport', engine.viewport)
-            self.lines_shader.set_float('thickness', engine.weight)
+            self.lines_shader.set_floatm("pv", self.view @ self.proj)
+            self.lines_shader.set_floatv("color", engine.stroke.to_gl())
+            self.lines_shader.set_floatv("viewport", engine.viewport)
+            self.lines_shader.set_float("thickness", engine.weight)
 
             glDrawArrays(GL_LINES_ADJACENCY, 0, 12)
-    
+
     def ellipse(self, engine, p1, p2):
         center, radius = p1.base, p2.base
 
@@ -702,27 +657,27 @@ class RenderOpenGL2(RenderOpenGL):
         elif engine.ellipse_mode == CORNERS:
             radius.xyz = (radius - center).xyz * 0.5
             center.xyz += radius.xyz
-        
+
         self.vertex.set(center.base.xyz, GL_DYNAMIC_DRAW)
 
         if not engine.fill.is_none:
             self.ellipse_shader.use()
-            self.ellipse_shader.set_floatm('pv', self.view @ self.proj)
-            self.ellipse_shader.set_floatv('color', engine.fill.to_gl())
-            self.ellipse_shader.set_floatv('radius', radius.xy)
+            self.ellipse_shader.set_floatm("pv", self.view @ self.proj)
+            self.ellipse_shader.set_floatv("color", engine.fill.to_gl())
+            self.ellipse_shader.set_floatv("radius", radius.xy)
 
             glDrawArrays(GL_POINTS, 0, 1)
 
         if not engine.stroke.is_none:
             self.ellipse_outline_shader.use()
-            self.ellipse_outline_shader.set_floatm('pv', self.view @ self.proj)
-            self.ellipse_outline_shader.set_floatv('color', engine.stroke.to_gl())
-            self.ellipse_outline_shader.set_floatv('radius', radius.xy)
-            self.ellipse_outline_shader.set_floatv('viewport', engine.viewport)
-            self.ellipse_outline_shader.set_float('thickness', engine.weight)
+            self.ellipse_outline_shader.set_floatm("pv", self.view @ self.proj)
+            self.ellipse_outline_shader.set_floatv("color", engine.stroke.to_gl())
+            self.ellipse_outline_shader.set_floatv("radius", radius.xy)
+            self.ellipse_outline_shader.set_floatv("viewport", engine.viewport)
+            self.ellipse_outline_shader.set_float("thickness", engine.weight)
 
             glDrawArrays(GL_POINTS, 0, 1)
-    
+
     def arc(self, engine, p1, p2, start, stop):
         center, radius = p1.base, p2.base
 
@@ -735,49 +690,49 @@ class RenderOpenGL2(RenderOpenGL):
         elif engine.ellipse_mode == CORNERS:
             radius.xyz = (radius - center).xyz * 0.5
             center.xyz += radius.xyz
-        
+
         self.vertex.set(center.base.xyz, GL_DYNAMIC_DRAW)
 
         if not engine.fill.is_none:
             self.arc_shader.use()
-            self.arc_shader.set_floatm('pv', pv)
-            self.arc_shader.set_floatv('color', engine.fill.to_gl())
-            self.arc_shader.set_floatv('radius', radius.xy)
-            self.arc_shader.set_float('start', start)
-            self.arc_shader.set_float('stop', stop)
+            self.arc_shader.set_floatm("pv", pv)
+            self.arc_shader.set_floatv("color", engine.fill.to_gl())
+            self.arc_shader.set_floatv("radius", radius.xy)
+            self.arc_shader.set_float("start", start)
+            self.arc_shader.set_float("stop", stop)
             if engine.arc_mode == OPEN:
-                self.arc_shader.set_int('mode', 0)
+                self.arc_shader.set_int("mode", 0)
             elif engine.arc_mode == CHORD:
-                self.arc_shader.set_int('mode', 1)
+                self.arc_shader.set_int("mode", 1)
             elif engine.arc_mode == PIE:
-                self.arc_shader.set_int('mode', 2)
+                self.arc_shader.set_int("mode", 2)
 
             glDrawArrays(GL_POINTS, 0, 1)
 
         if not engine.stroke.is_none:
             self.arc_outline_shader.use()
-            self.arc_outline_shader.set_floatm('pv', pv)
-            self.arc_outline_shader.set_floatv('color', engine.stroke.to_gl())
-            self.arc_outline_shader.set_floatv('radius', radius.xy)
-            self.arc_outline_shader.set_floatv('viewport', engine.viewport)
-            self.arc_outline_shader.set_float('thickness', engine.weight)
-            self.arc_outline_shader.set_float('start', start)
-            self.arc_outline_shader.set_float('stop', stop)
+            self.arc_outline_shader.set_floatm("pv", pv)
+            self.arc_outline_shader.set_floatv("color", engine.stroke.to_gl())
+            self.arc_outline_shader.set_floatv("radius", radius.xy)
+            self.arc_outline_shader.set_floatv("viewport", engine.viewport)
+            self.arc_outline_shader.set_float("thickness", engine.weight)
+            self.arc_outline_shader.set_float("start", start)
+            self.arc_outline_shader.set_float("stop", stop)
             if engine.arc_mode == OPEN:
-                self.arc_outline_shader.set_int('mode', 0)
+                self.arc_outline_shader.set_int("mode", 0)
             elif engine.arc_mode == CHORD:
-                self.arc_outline_shader.set_int('mode', 1)
+                self.arc_outline_shader.set_int("mode", 1)
             elif engine.arc_mode == PIE:
-                self.arc_outline_shader.set_int('mode', 2)
+                self.arc_outline_shader.set_int("mode", 2)
 
             glDrawArrays(GL_POINTS, 0, 1)
 
     def text(self, engine, text, pos):
-        arr, size = engine._font.render_raw(str(text), size = engine._text_size)
-        
+        arr, size = engine._font.render_raw(str(text), size=engine._text_size)
+
         w, h = size
         top_left = pos.base
-        
+
         if engine.text_align[0] == LEFT:
             pass
         elif engine.text_align[0] == CENTER:
@@ -791,15 +746,18 @@ class RenderOpenGL2(RenderOpenGL):
             top_left.y -= h * 0.5
         elif engine.text_align[1] == BOTTOM:
             top_left.y -= h
-        
+
         glBindTexture(GL_TEXTURE_2D, self.text_texture)
         glTexImage2D(
             GL_TEXTURE_2D,
-            0, GL_RED,
-            w, h,
-            0, GL_RED,
+            0,
+            GL_RED,
+            w,
+            h,
+            0,
+            GL_RED,
             GL_UNSIGNED_BYTE,
-            np.frombuffer(arr, dtype = np.uint8)
+            np.frombuffer(arr, dtype=np.uint8),
         )
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
 
@@ -808,15 +766,15 @@ class RenderOpenGL2(RenderOpenGL):
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glActiveTexture(GL_TEXTURE0)
-        
+
         self.vertex.set(top_left.base.xyz, GL_DYNAMIC_DRAW)
 
         self.text_shader.use()
-        self.text_shader.set_floatm('pv', self.view @ self.proj)
-        self.text_shader.set_floatv('color', engine.fill.to_gl())
-        self.text_shader.set_floatv('viewport', engine.viewport)
-        self.text_shader.set_float('textSize', w, h)
-        self.text_shader.set_int('text', 0)
+        self.text_shader.set_floatm("pv", self.view @ self.proj)
+        self.text_shader.set_floatv("color", engine.fill.to_gl())
+        self.text_shader.set_floatv("viewport", engine.viewport)
+        self.text_shader.set_float("textSize", w, h)
+        self.text_shader.set_int("text", 0)
 
         glDrawArrays(GL_POINTS, 0, 1)
 
@@ -824,73 +782,73 @@ class RenderOpenGL2(RenderOpenGL):
 class RenderOpenGL3(RenderOpenGL):
     def __init__(self):
         super().__init__()
-        
+
         self.point_shader, self.point_vertex = None, None
         self.point_group = []
-        
+
         self.line_shader, self.line_vertex = None, None
         self.line_group = []
-        
+
         self.lines_shader, self.lines_vertex = None, None
-        
+
         self.triangle_shader, self.triangle_vertex = None, None
         self.triangle_group = []
-        
+
         self.quad_shader, self.quad_vertex = None, None
         self.quad_group = []
-        
+
         self.poly_shader, self.poly_vertex = None, None
         self.poly_buffer = None
-        
+
         self.ellipse_shader, self.ellipse_vertex = None, None
         self.ellipse_group = []
-        
+
         self.arc_shader = None
         self.arc_outline_shader = None
-        
+
         self.text_shader, self.text_vertex = None, None
         self.text_texture = 0
 
     def setup(self, engine):
         super().setup(engine)
-        
+
         self.point_shader, self.point_vertex = Shader(
             (GL_VERTEX_SHADER, POINT_VERT3),
             (GL_GEOMETRY_SHADER, POINT_GEOM3),
-            (GL_FRAGMENT_SHADER, FRAG3)
-        ), VertexArray('float32', 3, 4, 1, 4, 4, 4, 4)
+            (GL_FRAGMENT_SHADER, FRAG3),
+        ), VertexArray("float32", 3, 4, 1, 4, 4, 4, 4)
         self.line_shader, self.line_vertex = Shader(
             (GL_VERTEX_SHADER, LINE_VERT3),
             (GL_GEOMETRY_SHADER, LINE_GEOM3),
-            (GL_FRAGMENT_SHADER, FRAG3)
-        ), VertexArray('float32', 3, 3, 4, 1, 4, 4, 4, 4)
+            (GL_FRAGMENT_SHADER, FRAG3),
+        ), VertexArray("float32", 3, 3, 4, 1, 4, 4, 4, 4)
         self.lines_shader, self.lines_vertex = Shader(
             (GL_VERTEX_SHADER, LINES_VERT3),
             (GL_GEOMETRY_SHADER, LINES_GEOM3),
-            (GL_FRAGMENT_SHADER, FRAG3)
-        ), VertexArray('float32', 3)
+            (GL_FRAGMENT_SHADER, FRAG3),
+        ), VertexArray("float32", 3)
         self.triangle_shader, self.triangle_vertex = Shader(
             (GL_VERTEX_SHADER, TRIANGLE_VERT3),
             (GL_GEOMETRY_SHADER, TRIANGLE_GEOM3),
-            (GL_FRAGMENT_SHADER, FRAG3)
-        ), VertexArray('float32', 3, 3, 3, 4, 4, 1, 4, 4, 4, 4)
+            (GL_FRAGMENT_SHADER, FRAG3),
+        ), VertexArray("float32", 3, 3, 3, 4, 4, 1, 4, 4, 4, 4)
         self.quad_shader, self.quad_vertex = Shader(
             (GL_VERTEX_SHADER, QUAD_VERT3),
             (GL_GEOMETRY_SHADER, QUAD_GEOM3),
-            (GL_FRAGMENT_SHADER, FRAG3)
-        ), VertexArray('float32', 3, 3, 3, 3, 4, 4, 1, 4, 4, 4, 4)
+            (GL_FRAGMENT_SHADER, FRAG3),
+        ), VertexArray("float32", 3, 3, 3, 3, 4, 4, 1, 4, 4, 4, 4)
         self.poly_shader, self.poly_vertex = Shader(
             (GL_VERTEX_SHADER, POLY_VERT3),
             (GL_GEOMETRY_SHADER, POLY_GEOM3),
-            (GL_FRAGMENT_SHADER, FRAG3)
-        ), VertexArray('float32', 3)
-        self.poly_buffer = Buffer(GL_SHADER_STORAGE_BUFFER, 'float32')
+            (GL_FRAGMENT_SHADER, FRAG3),
+        ), VertexArray("float32", 3)
+        self.poly_buffer = Buffer(GL_SHADER_STORAGE_BUFFER, "float32")
         self.poly_buffer.bind_base(1)
         self.ellipse_shader, self.ellipse_vertex = Shader(
             (GL_VERTEX_SHADER, ELLIPSE_VERT3),
             (GL_GEOMETRY_SHADER, ELLIPSE_GEOM3),
-            (GL_FRAGMENT_SHADER, FRAG3)
-        ), VertexArray('float32', 3, 2, 4, 4, 1, 4, 4, 4, 4)
+            (GL_FRAGMENT_SHADER, FRAG3),
+        ), VertexArray("float32", 3, 2, 4, 4, 1, 4, 4, 4, 4)
         # self.arc_shader = Shader(
         #     (GL_VERTEX_SHADER, _VERT),
         #     (GL_GEOMETRY_SHADER, _ARC_GEOM),
@@ -904,8 +862,8 @@ class RenderOpenGL3(RenderOpenGL):
         self.text_shader, self.text_vertex = Shader(
             (GL_VERTEX_SHADER, TEXT_VERT3),
             (GL_GEOMETRY_SHADER, TEXT_GEOM3),
-            (GL_FRAGMENT_SHADER, TEXT_FRAG3)
-        ), VertexArray('float32', 3, 2, 4, 4, 4, 4, 4)
+            (GL_FRAGMENT_SHADER, TEXT_FRAG3),
+        ), VertexArray("float32", 3, 2, 4, 4, 4, 4, 4)
         self.texture_id = glGenTextures(1)
 
     def after_draw(self, engine):
@@ -917,14 +875,14 @@ class RenderOpenGL3(RenderOpenGL):
             self.point_vertex.set(data, GL_DYNAMIC_DRAW)
 
             self.point_shader.use()
-            self.point_shader.set_floatm('proj', self.proj)
-            self.point_shader.set_floatv('viewport', engine.viewport)
+            self.point_shader.set_floatm("proj", self.proj)
+            self.point_shader.set_floatv("viewport", engine.viewport)
 
             glDrawArrays(GL_POINTS, 0, len(self.point_group))
 
             self.point_vertex.unbind()
             self.point_group = []
-        
+
         if len(self.line_group) > 0:
             self.line_vertex.bind()
 
@@ -933,14 +891,14 @@ class RenderOpenGL3(RenderOpenGL):
             self.line_vertex.set(data, GL_DYNAMIC_DRAW)
 
             self.line_shader.use()
-            self.line_shader.set_floatm('proj', self.proj)
-            self.line_shader.set_floatv('viewport', engine.viewport)
+            self.line_shader.set_floatm("proj", self.proj)
+            self.line_shader.set_floatv("viewport", engine.viewport)
 
             glDrawArrays(GL_POINTS, 0, len(self.line_group))
 
             self.line_vertex.unbind()
             self.line_group = []
-        
+
         if len(self.triangle_group) > 0:
             self.triangle_vertex.bind()
 
@@ -949,14 +907,14 @@ class RenderOpenGL3(RenderOpenGL):
             self.triangle_vertex.set(data, GL_DYNAMIC_DRAW)
 
             self.triangle_shader.use()
-            self.triangle_shader.set_floatm('proj', self.proj)
-            self.triangle_shader.set_floatv('viewport', engine.viewport)
+            self.triangle_shader.set_floatm("proj", self.proj)
+            self.triangle_shader.set_floatv("viewport", engine.viewport)
 
             glDrawArrays(GL_POINTS, 0, len(self.triangle_group))
 
             self.triangle_vertex.unbind()
             self.triangle_group = []
-        
+
         if len(self.quad_group) > 0:
             self.quad_vertex.bind()
 
@@ -965,14 +923,14 @@ class RenderOpenGL3(RenderOpenGL):
             self.quad_vertex.set(data, GL_DYNAMIC_DRAW)
 
             self.quad_shader.use()
-            self.quad_shader.set_floatm('proj', self.proj)
-            self.quad_shader.set_floatv('viewport', engine.viewport)
+            self.quad_shader.set_floatm("proj", self.proj)
+            self.quad_shader.set_floatv("viewport", engine.viewport)
 
             glDrawArrays(GL_POINTS, 0, len(self.quad_group))
 
             self.quad_vertex.unbind()
             self.quad_group = []
-        
+
         if len(self.ellipse_group) > 0:
             self.ellipse_vertex.bind()
 
@@ -981,8 +939,8 @@ class RenderOpenGL3(RenderOpenGL):
             self.ellipse_vertex.set(data, GL_DYNAMIC_DRAW)
 
             self.ellipse_shader.use()
-            self.ellipse_shader.set_floatm('proj', self.proj)
-            self.ellipse_shader.set_floatv('viewport', engine.viewport)
+            self.ellipse_shader.set_floatm("proj", self.proj)
+            self.ellipse_shader.set_floatv("viewport", engine.viewport)
 
             glDrawArrays(GL_POINTS, 0, len(self.ellipse_group))
 
@@ -990,22 +948,21 @@ class RenderOpenGL3(RenderOpenGL):
             self.ellipse_group = []
 
     def point(self, engine, p):
-        self.point_group.append([
-            *p.base.xyz,
-            *engine.stroke.to_gl(),
-            engine.weight,
-            *self.view.flatten()
-        ])
+        self.point_group.append(
+            [*p.base.xyz, *engine.stroke.to_gl(), engine.weight, *self.view.flatten()]
+        )
 
     def line(self, engine, p1, p2):
-        self.line_group.append([
-            *p1.base.xyz,
-            *p2.base.xyz,
-            *engine.stroke.to_gl(),
-            engine.weight,
-            *self.view.flatten()
-        ])
-    
+        self.line_group.append(
+            [
+                *p1.base.xyz,
+                *p2.base.xyz,
+                *engine.stroke.to_gl(),
+                engine.weight,
+                *self.view.flatten(),
+            ]
+        )
+
     def lines(self, engine, *points):
         if not engine.stroke.is_none:
             self.lines_vertex.bind()
@@ -1019,58 +976,62 @@ class RenderOpenGL3(RenderOpenGL):
             self.lines_vertex.set(np.array(data), GL_DYNAMIC_DRAW)
 
             self.lines_shader.use()
-            self.lines_shader.set_floatm('proj', self.proj)
-            self.lines_shader.set_floatm('view', self.view)
-            self.lines_shader.set_floatv('viewport', engine.viewport)
-            self.lines_shader.set_floatv('stroke', engine.stroke.to_gl())
-            self.lines_shader.set_float('weight', engine.weight)
+            self.lines_shader.set_floatm("proj", self.proj)
+            self.lines_shader.set_floatm("view", self.view)
+            self.lines_shader.set_floatv("viewport", engine.viewport)
+            self.lines_shader.set_floatv("stroke", engine.stroke.to_gl())
+            self.lines_shader.set_float("weight", engine.weight)
 
             glDrawArrays(GL_TRIANGLES, 0, len(points) * 3)
 
             self.lines_vertex.unbind()
-    
+
     def triangle(self, engine, p1, p2, p3):
-        self.triangle_group.append([
-            *p1.base.xyz,
-            *p2.base.xyz,
-            *p3.base.xyz,
-            *engine.fill.to_gl(),
-            *engine.stroke.to_gl(),
-            engine.weight,
-            *self.view.flatten()
-        ])
+        self.triangle_group.append(
+            [
+                *p1.base.xyz,
+                *p2.base.xyz,
+                *p3.base.xyz,
+                *engine.fill.to_gl(),
+                *engine.stroke.to_gl(),
+                engine.weight,
+                *self.view.flatten(),
+            ]
+        )
 
     def quad(self, engine, p1, p2, p3, p4):
-        self.quad_group.append([
-            *p1.base.xyz,
-            *p2.base.xyz,
-            *p3.base.xyz,
-            *p4.base.xyz,
-            *engine.fill.to_gl(),
-            *engine.stroke.to_gl(),
-            engine.weight,
-            *self.view.flatten()
-        ])
+        self.quad_group.append(
+            [
+                *p1.base.xyz,
+                *p2.base.xyz,
+                *p3.base.xyz,
+                *p4.base.xyz,
+                *engine.fill.to_gl(),
+                *engine.stroke.to_gl(),
+                engine.weight,
+                *self.view.flatten(),
+            ]
+        )
 
     def polygon(self, engine, *points):
         if not engine.fill.is_none:
             self.poly_vertex.bind()
             self.poly_vertex.set(points[0].base.xyz, GL_DYNAMIC_DRAW)
-            
+
             self.poly_buffer.bind()
-            
+
             data = np.array([p.base for p in points])
             self.poly_buffer.set(data, GL_DYNAMIC_DRAW)
 
             self.poly_shader.use()
-            self.poly_shader.set_floatm('proj', self.proj)
-            self.poly_shader.set_floatm('view', self.view)
-            self.poly_shader.set_floatv('fill', engine.fill.to_gl())
+            self.poly_shader.set_floatm("proj", self.proj)
+            self.poly_shader.set_floatm("view", self.view)
+            self.poly_shader.set_floatv("fill", engine.fill.to_gl())
 
             glDrawArrays(GL_POINTS, 0, 1)
 
             self.poly_vertex.unbind()
-        
+
         if not engine.stroke.is_none:
             self.lines_vertex.bind()
 
@@ -1085,11 +1046,11 @@ class RenderOpenGL3(RenderOpenGL):
             self.lines_vertex.set(data, GL_DYNAMIC_DRAW)
 
             self.lines_shader.use()
-            self.lines_shader.set_floatm('proj', self.proj)
-            self.lines_shader.set_floatm('view', self.view)
-            self.lines_shader.set_floatv('viewport', engine.viewport)
-            self.lines_shader.set_floatv('stroke', engine.stroke.to_gl())
-            self.lines_shader.set_float('weight', engine.weight)
+            self.lines_shader.set_floatm("proj", self.proj)
+            self.lines_shader.set_floatm("view", self.view)
+            self.lines_shader.set_floatv("viewport", engine.viewport)
+            self.lines_shader.set_floatv("stroke", engine.stroke.to_gl())
+            self.lines_shader.set_float("weight", engine.weight)
 
             glDrawArrays(GL_TRIANGLES, 0, len(points) * 3)
 
@@ -1107,25 +1068,27 @@ class RenderOpenGL3(RenderOpenGL):
         elif engine.ellipse_mode == CORNERS:
             radius.xyz = (radius - center).xyz * 0.5
             center.xyz += radius.xyz
-        
-        self.ellipse_group.append([
-            *center.xyz,
-            *radius.xy,
-            *engine.fill.to_gl(),
-            *engine.stroke.to_gl(),
-            engine.weight,
-            *self.view.flatten()
-        ])
+
+        self.ellipse_group.append(
+            [
+                *center.xyz,
+                *radius.xy,
+                *engine.fill.to_gl(),
+                *engine.stroke.to_gl(),
+                engine.weight,
+                *self.view.flatten(),
+            ]
+        )
 
     def arc(self, engine, p1, p2, start, stop):
         pass
 
     def text(self, engine, text, pos):
-        arr, size = engine._font.render_raw(str(text), size = engine._text_size)
-        
+        arr, size = engine._font.render_raw(str(text), size=engine._text_size)
+
         w, h = size
         top_left = pos.base
-        
+
         if engine.text_align[0] == LEFT:
             pass
         elif engine.text_align[0] == CENTER:
@@ -1139,15 +1102,18 @@ class RenderOpenGL3(RenderOpenGL):
             top_left.y -= h * 0.5
         elif engine.text_align[1] == BOTTOM:
             top_left.y -= h
-        
+
         glBindTexture(GL_TEXTURE_2D, self.text_texture)
         glTexImage2D(
             GL_TEXTURE_2D,
-            0, GL_RED,
-            w, h,
-            0, GL_RED,
+            0,
+            GL_RED,
+            w,
+            h,
+            0,
+            GL_RED,
             GL_UNSIGNED_BYTE,
-            np.frombuffer(arr, dtype = np.uint8)
+            np.frombuffer(arr, dtype=np.uint8),
         )
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
 
@@ -1156,29 +1122,24 @@ class RenderOpenGL3(RenderOpenGL):
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glActiveTexture(GL_TEXTURE0)
-        
+
         self.text_vertex.bind()
 
-        data = np.array([
-            *top_left.xyz,
-            w, h,
-            *engine.fill.to_gl(),
-            *self.view.flatten()
-        ])
+        data = np.array([*top_left.xyz, w, h, *engine.fill.to_gl(), *self.view.flatten()])
 
         self.text_vertex.set(data, GL_DYNAMIC_DRAW)
 
         self.text_shader.use()
-        self.text_shader.set_floatm('proj', self.proj)
-        self.text_shader.set_floatv('viewport', engine.viewport)
-        self.text_shader.set_int('text', 0)
+        self.text_shader.set_floatm("proj", self.proj)
+        self.text_shader.set_floatv("viewport", engine.viewport)
+        self.text_shader.set_int("text", 0)
 
         glDrawArrays(GL_POINTS, 0, 1)
 
         self.text_vertex.unbind()
 
 
-VERT2 = '''
+VERT2 = """
 #version 330
 
 uniform mat4 pv;
@@ -1192,9 +1153,9 @@ void main(void)
     position = aPosition;
     gl_Position = pv * vec4(aPosition, 1.0);
 }
-'''
+"""
 
-FRAG2 = '''
+FRAG2 = """
 #version 330
 
 out vec4 FragColor;
@@ -1205,9 +1166,9 @@ void main(void)
 {
     FragColor = color;
 }
-'''
+"""
 
-POINT_GEOM2 = '''
+POINT_GEOM2 = """
 #version 330
 
 uniform float thickness;
@@ -1239,9 +1200,9 @@ void main(void)
     }
     EndPrimitive();
 }
-'''
+"""
 
-LINE_GEOM2 = '''
+LINE_GEOM2 = """
 #version 330 core
 
 layout(lines) in;
@@ -1277,9 +1238,9 @@ void main(void)
     
     EndPrimitive();
 }
-'''
+"""
 
-LINES_GEOM2 = '''
+LINES_GEOM2 = """
 #version 330
 
 uniform mat4 pv;
@@ -1352,9 +1313,9 @@ void main(void)
     
     EndPrimitive();
 }
-'''
+"""
 
-ELLIPSE_GEOM2 = '''
+ELLIPSE_GEOM2 = """
 #version 330
 
 in vec3 position[1];
@@ -1381,9 +1342,9 @@ void main(void)
     }
     EndPrimitive();
 }
-'''
+"""
 
-ELLIPSE_OUTLINE_GEOM2 = '''
+ELLIPSE_OUTLINE_GEOM2 = """
 #version 330
 
 in vec3 position[1];
@@ -1489,9 +1450,9 @@ void main(void)
         EndPrimitive();
     }
 }
-'''
+"""
 
-ARC_GEOM2 = '''
+ARC_GEOM2 = """
 #version 330
 
 in vec3 position[1];
@@ -1547,9 +1508,9 @@ void main(void)
     }
     EndPrimitive();
 }
-'''
+"""
 
-ARC_OUTLINE_GEOM2 = '''
+ARC_OUTLINE_GEOM2 = """
 #version 330
 
 in vec3 position[1];
@@ -1670,9 +1631,9 @@ void main(void)
         EndPrimitive();
     }
 }
-'''
+"""
 
-TEXT_GEOM2 = '''
+TEXT_GEOM2 = """
 #version 330
 
 out vec2 TextCoord;
@@ -1715,9 +1676,9 @@ void main(void)
     
     EndPrimitive();
 }
-'''
+"""
 
-TEXT_FRAG2 = '''
+TEXT_FRAG2 = """
 #version 330
 
 out vec4 FragColor;
@@ -1733,9 +1694,9 @@ void main(void)
     FragColor.a *= texture(text, TextCoord).r;
     //FragColor = vec4(TextCoord, 0.0, 1.0);
 }
-'''
+"""
 
-FRAG3 = '''
+FRAG3 = """
 #version 430
 
 in vec4 color;
@@ -1746,9 +1707,9 @@ void main(void)
 {
     FragColor = color;
 }
-'''
+"""
 
-POINT_VERT3 = '''
+POINT_VERT3 = """
 #version 430
 
 layout(location = 0) in vec3 aPosition;
@@ -1767,9 +1728,9 @@ void main(void)
     weight = aWeight;
     gl_Position = proj * aView * vec4(aPosition, 1.0);
 }
-'''
+"""
 
-POINT_GEOM3 = '''
+POINT_GEOM3 = """
 #version 430
 
 layout(points) in;
@@ -1809,9 +1770,9 @@ void main(void)
         EndPrimitive();
     }
 }
-'''
+"""
 
-LINE_VERT3 = '''
+LINE_VERT3 = """
 #version 430
 
 layout(location = 0) in vec3 aPosition0;
@@ -1834,9 +1795,9 @@ void main(void)
     stroke = aStroke;
     weight = aWeight;
 }
-'''
+"""
 
-LINE_GEOM3 = '''
+LINE_GEOM3 = """
 #version 430
 
 layout(points) in;
@@ -1882,9 +1843,9 @@ void main(void)
         EndPrimitive();
     }
 }
-'''
+"""
 
-LINES_VERT3 = '''
+LINES_VERT3 = """
 #version 430
 
 layout(location = 0) in vec3 aPosition;
@@ -1896,9 +1857,9 @@ void main(void)
 {
     gl_Position = proj * view * vec4(aPosition, 1.0);
 }
-'''
+"""
 
-LINES_GEOM3 = '''
+LINES_GEOM3 = """
 #version 430
 
 layout(triangles) in;
@@ -1981,9 +1942,9 @@ void main(void)
         
     drawLine(p0, p1, p2);
 }
-'''
+"""
 
-TRIANGLE_VERT3 = '''
+TRIANGLE_VERT3 = """
 #version 430
 
 layout(location = 0) in vec3 aPosition0;
@@ -2012,9 +1973,9 @@ void main(void)
     stroke = aStroke;
     weight = aWeight;
 }
-'''
+"""
 
-TRIANGLE_GEOM3 = '''
+TRIANGLE_GEOM3 = """
 #version 430
 
 layout(points) in;
@@ -2119,9 +2080,9 @@ void main(void)
         drawLine(p2, p0, p1);
     }
 }
-'''
+"""
 
-QUAD_VERT3 = '''
+QUAD_VERT3 = """
 #version 430
 
 layout(location = 0) in vec3 aPosition0;
@@ -2153,9 +2114,9 @@ void main(void)
     stroke = aStroke;
     weight = aWeight;
 }
-'''
+"""
 
-QUAD_GEOM3 = '''
+QUAD_GEOM3 = """
 #version 430
 
 layout(points) in;
@@ -2284,9 +2245,9 @@ void main(void)
         drawLine(p2, p3, p0);
     }
 }
-'''
+"""
 
-POLY_VERT3 = '''
+POLY_VERT3 = """
 #version 430
 
 layout(location = 0) in vec3 aPosition;
@@ -2295,9 +2256,9 @@ void main(void)
 {
     
 }
-'''
+"""
 
-POLY_GEOM3 = '''
+POLY_GEOM3 = """
 #version 430
 
 layout(points) in;
@@ -2379,9 +2340,9 @@ void main(void)
         else i++;
     }
 }
-'''
+"""
 
-ELLIPSE_VERT3 = '''
+ELLIPSE_VERT3 = """
 #version 430
 
 layout(location = 0) in vec3 aPosition;
@@ -2409,9 +2370,9 @@ void main(void)
     weight = aWeight;
     pv = proj * aView;
 }
-'''
+"""
 
-ELLIPSE_GEOM3 = '''
+ELLIPSE_GEOM3 = """
 #version 430
 
 layout(points) in;
@@ -2537,9 +2498,9 @@ void main(void)
         }
     }
 }
-'''
+"""
 
-TEXT_VERT3 = '''
+TEXT_VERT3 = """
 #version 430
 
 layout(location = 0) in vec3 aPosition;
@@ -2558,9 +2519,9 @@ void main(void)
     fill = aFill;
     gl_Position = proj * aView * vec4(aPosition, 1.0);
 }
-'''
+"""
 
-TEXT_GEOM3 = '''
+TEXT_GEOM3 = """
 #version 430
 
 layout(points) in;
@@ -2612,9 +2573,9 @@ void main(void)
     
     EndPrimitive();
 }
-'''
+"""
 
-TEXT_FRAG3 = '''
+TEXT_FRAG3 = """
 #version 430
 
 uniform sampler2D text;
@@ -2629,9 +2590,9 @@ void main(void)
     FragColor = color;
     FragColor.a *= texture(text, coord).r;
 }
-'''
+"""
 
-PIXEL_VERT3 = '''
+PIXEL_VERT3 = """
 #version 430
 
 layout(location = 0) in vec2 aPosition;
@@ -2643,9 +2604,9 @@ void main(void)
     gl_Position = vec4(aPosition, 0.0, 1.0);
     TextCoord = vec2(aPosition.x < 0 ? 0.0 : 1.0, aPosition.y < 0 ? 1.0 : 0.0);
 }
-'''
+"""
 
-PIXEL_FRAG3 = '''
+PIXEL_FRAG3 = """
 #version 430
 
 uniform sampler2D TextMap;
@@ -2658,4 +2619,4 @@ void main(void)
 {
     FragColor = texture(TextMap, TextCoord);
 }
-'''
+"""

@@ -17,7 +17,7 @@ class Circle:
         pygame.draw.circle(engine.screen, white, self.pos, self.r, 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     engine.size(800, 800, PYGAME)
 
     engine.frame_rate = 60

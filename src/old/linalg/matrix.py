@@ -9,67 +9,68 @@ Licence: GPLv3 or higher <http://www.gnu.org/licenses/gpl.html>
 
 # imports ####################################################################
 
-from math import (cos as _cos, sin as _sin,
-                  radians as _radians, sqrt as _sqrt)
+from math import cos as _cos
+from math import radians as _radians
+from math import sin as _sin
+from math import sqrt as _sqrt
 
 _sum = sum
 
 
 # matrix construction ########################################################
 
+
 def identity():
-    return [[1., 0., 0., 0.],
-            [0., 1., 0., 0.],
-            [0., 0., 1., 0.],
-            [0., 0., 0., 1.]]
+    return [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
 
 
-def scale(sx = 1., sy = 1., sz = 1.):
-    return [[sx, 0., 0., 0.],
-            [0., sy, 0., 0.],
-            [0., 0., sz, 0.],
-            [0., 0., 0., 1.]]
+def scale(sx=1.0, sy=1.0, sz=1.0):
+    return [[sx, 0.0, 0.0, 0.0], [0.0, sy, 0.0, 0.0], [0.0, 0.0, sz, 0.0], [0.0, 0.0, 0.0, 1.0]]
 
 
-def translate(tx = 0., ty = 0., tz = 0.):
-    return [[1., 0., 0., tx],
-            [0., 1., 0., ty],
-            [0., 0., 1., tz],
-            [0., 0., 0., 1.]]
+def translate(tx=0.0, ty=0.0, tz=0.0):
+    return [[1.0, 0.0, 0.0, tx], [0.0, 1.0, 0.0, ty], [0.0, 0.0, 1.0, tz], [0.0, 0.0, 0.0, 1.0]]
 
 
-def rotate(a = 0., x = 0., y = 0., z = 1.):
+def rotate(a=0.0, x=0.0, y=0.0, z=1.0):
     a = _radians(a)
     s, c = _sin(a), _cos(a)
     h = _sqrt(x * x + y * y + z * z)
     x, y, z = x / h, y / h, z / h
     sx, sy, sz = s * x, s * y, s * z
-    oc = 1. - c
-    return [[oc * x * x + c, oc * x * y - sz, oc * x * z + sy, 0.],
-            [oc * x * y + sz, oc * y * y + c, oc * y * z - sx, 0.],
-            [oc * x * z - sy, oc * y * z + sx, oc * z * z + c, 0.],
-            [0., 0., 0., 1.]]
+    oc = 1.0 - c
+    return [
+        [oc * x * x + c, oc * x * y - sz, oc * x * z + sy, 0.0],
+        [oc * x * y + sz, oc * y * y + c, oc * y * z - sx, 0.0],
+        [oc * x * z - sy, oc * y * z + sx, oc * z * z + c, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
 
 
 def ortho(l, r, b, t, n, f):
     w, h, d = r - l, t - b, f - n
-    return [[2. / w, 0., 0., -(r + l) / w],
-            [0., 2. / h, 0., -(t + b) / h],
-            [0., 0., -2. / d, -(f + n) / d],
-            [0., 0., 0., 1.]]
+    return [
+        [2.0 / w, 0.0, 0.0, -(r + l) / w],
+        [0.0, 2.0 / h, 0.0, -(t + b) / h],
+        [0.0, 0.0, -2.0 / d, -(f + n) / d],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
 
 
 def frustum(l, r, b, t, n, f):
     w, h, d = r - l, t - b, f - n
-    return [[2. * n / w, 0., (r + l) / w, 0.],
-            [0., 2. * n / h, (t + b) / h, 0.],
-            [0., 0., -(f + n) / d, -2. * f * n / d],
-            [0., 0., -1., 0.]]
+    return [
+        [2.0 * n / w, 0.0, (r + l) / w, 0.0],
+        [0.0, 2.0 * n / h, (t + b) / h, 0.0],
+        [0.0, 0.0, -(f + n) / d, -2.0 * f * n / d],
+        [0.0, 0.0, -1.0, 0.0],
+    ]
 
 
 # manipulation ###############################################################
 
-def matrix(n, m, f = lambda i, j: 0.):
+
+def matrix(n, m, f=lambda i, j: 0.0):
     I, J = range(n), range(m)
     return [[f(i, j) for j in J] for i in I]
 
@@ -88,7 +89,7 @@ def column_major(A):
 
 
 def exclude(A, i, j):
-    return [R[:j] + R[j + 1:] for R in A[:i] + A[i + 1:]]
+    return [R[:j] + R[j + 1 :] for R in A[:i] + A[i + 1 :]]
 
 
 def top_left(A):
@@ -97,6 +98,7 @@ def top_left(A):
 
 
 # sum ########################################################################
+
 
 def add(A, B):
     n, p = size(A)
@@ -113,6 +115,7 @@ def sub(A, B):
 
 
 # product ####################################################################
+
 
 def scalar(s, A):
     n, m = size(A)
@@ -134,6 +137,7 @@ def product(A, *Bs):
 
 
 # inverse ####################################################################
+
 
 def det(A):
     n, m = size(A)
@@ -158,4 +162,4 @@ def inverse(A):
     C = matrix(n, m, lambda i, j: cofactor(A, i, j))
     I = range(n)
     d = sum(A[i][0] * C[i][0] for i in I)
-    return scalar(1. / d, transpose(C))
+    return scalar(1.0 / d, transpose(C))

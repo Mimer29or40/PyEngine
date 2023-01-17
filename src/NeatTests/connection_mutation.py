@@ -1,11 +1,17 @@
-from neat import NodeType, Node, seed
-from NeatTests.neat_test import setup, test, run
+from neat import Node
+from neat import NodeType
+from neat import seed
 
-if __name__ == '__main__':
+from NeatTests.neat_test import run
+from NeatTests.neat_test import setup
+from NeatTests.neat_test import test
+
+if __name__ == "__main__":
+
     @setup
     def setup(genome, node_inno, con_inno):
         seed(1337)
-        
+
         input1 = Node(node_inno.inc, 0, NodeType.INPUT)
         input2 = Node(node_inno.inc, 0, NodeType.INPUT)
         output = Node(node_inno.inc, 1, NodeType.OUTPUT)

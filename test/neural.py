@@ -2,7 +2,7 @@ import numpy as np
 
 
 def sigmoid(x):
-    return 1. / (1. + np.exp(-x))
+    return 1.0 / (1.0 + np.exp(-x))
 
 
 def d_sigmoid(x):
@@ -17,21 +17,21 @@ class Weights(np.ndarray):
         return weights
 
     def __new__(cls, r, c):
-        weights = np.zeros((r, c), dtype = float).view(cls)
+        weights = np.zeros((r, c), dtype=float).view(cls)
         return weights
 
     rows = property(lambda self: self.shape[0])
     cols = property(lambda self: self.shape[1])
 
     def randomize(self):
-        self[:] = np.random.random(self.shape) * 2. - 1.
+        self[:] = np.random.random(self.shape) * 2.0 - 1.0
         return self
 
     def mutate(self, mutation_rate):
         mutate = np.random.random(self.shape) < mutation_rate
-        rand = np.random.normal(size = self.shape) / 5
-        np.add(self, rand, out = self, where = mutate)
-        np.clip(self, -1., 1., out = self)
+        rand = np.random.normal(size=self.shape) / 5
+        np.add(self, rand, out=self, where=mutate)
+        np.clip(self, -1.0, 1.0, out=self)
 
     def add_bias(self):
         weights = Weights(self.rows + 1, self.cols)
@@ -92,7 +92,7 @@ class NeuralNet:
         return new
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     net1 = NeuralNet(5, 5, 5)
     net2 = NeuralNet(5, 5, 5)
     # print(net1.output([1, 2, 3, 4, 5]))

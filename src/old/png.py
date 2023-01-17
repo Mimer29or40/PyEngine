@@ -13,8 +13,8 @@ import ctypes
 import struct
 import zlib
 
-
 # minimal png encoder ########################################################
+
 
 def cat(gen):
     def joined(*args):
@@ -27,15 +27,15 @@ def cat(gen):
 def lines(width, height, depth, data):
     width *= depth
     for i in reversed(range(height)):
-        yield struct.pack(">B%ss" % width, 0, data[i * width:(i + 1) * width])
+        yield struct.pack(">B%ss" % width, 0, data[i * width : (i + 1) * width])
 
 
 @cat
-def chunk(chunk_type, data = b""):
+def chunk(chunk_type, data=b""):
     yield struct.pack(">I", len(data))
     yield chunk_type
     yield data
-    yield struct.pack(">I", zlib.crc32(chunk_type + data) & 0xffffffff)
+    yield struct.pack(">I", zlib.crc32(chunk_type + data) & 0xFFFFFFFF)
 
 
 @cat

@@ -1,16 +1,16 @@
 # https://github.com/Code-Bullet/SnakeFusion
 # https://github.com/Code-Bullet/NEAT-Template-JavaScript
 
-from engine import *
-
 from neural import NeuralNet
+
+from engine import *
 
 
 class Board:
-    def __init__(self, rows, cols, brain = None):
+    def __init__(self, rows, cols, brain=None):
         self.rows, self.cols = rows, cols
 
-        self.board = np.zeros((rows, cols), dtype = np.uint8)
+        self.board = np.zeros((rows, cols), dtype=np.uint8)
         self.board[:, 0] = self.board[:, -1] = 1
         self.board[0, :] = self.board[-1, :] = 1
 
@@ -39,14 +39,14 @@ class Board:
     @property
     def alive(self):
         return self.health > 0
-    
+
     def copy(self):
-        return Board(self.rows, self.cols, brain = self.brain)
-    
+        return Board(self.rows, self.cols, brain=self.brain)
+
     def crossover(self, partner):
         brain = self.brain.crossover(partner.brain)
-        return Board(self.rows, self.cols, brain = brain)
-    
+        return Board(self.rows, self.cols, brain=brain)
+
     def mutate(self, mutation_rate):
         self.brain.mutate(mutation_rate)
         return self
@@ -87,7 +87,7 @@ class Board:
         self.board[int(next.y), int(next.x)] = 2
 
     def update(self):
-        inputs = (self.board.astype(float) / 3.).flatten()
+        inputs = (self.board.astype(float) / 3.0).flatten()
         inputs = np.append(inputs, [self.dir.heading()])
         decision = self.brain.output(inputs)
         decision = np.argmax(decision)
@@ -106,7 +106,7 @@ class Board:
 
         self.move(self.dir)
 
-    def show(self, size = Vector(500, 500), pos = Vector(300, 0)):
+    def show(self, size=Vector(500, 500), pos=Vector(300, 0)):
         _size = size // [self.cols, self.rows]
 
         engine.stroke = 0
@@ -129,21 +129,21 @@ class Board:
 
 
 class Population:
-    def __init__(self, rows, cols, num = 4, size = None, best = None):
+    def __init__(self, rows, cols, num=4, size=None, best=None):
         self.generation = 1
-        
+
         size = size if size else 50
-        
+
         if best is None:
             self.boards = [Board(rows, cols) for _ in range(size)]
             self.best = self.boards[0]
         else:
             self.boards = [best.copy().mutate(mutation_rate) for _ in range(size)]
             self.best = best
-        
+
         self.num = num
         self.grid = int(np.ceil(np.sqrt(num)))
-    
+
     def natural_selection(self):
         def select():
             total_fitness = sum(b.fitness for b in self.boards)
@@ -154,31 +154,32 @@ class Population:
                 if running_total > rand:
                     return b
             return self.boards[0]
+
         boards = []
         boards.append(self.best.copy())
         for _ in self.boards:
             parent1, parent2 = select(), select()
             child = parent1.crossover(parent2).mutate(mutation_rate)
             boards.append(child)
-        
+
         self.boards = boards
-        
+
         self.generation += 1
-    
+
     def update(self):
         for b in self.boards:
             if b.alive:
                 b.update()
-        top = sorted(self.boards, key=lambda b: b.fitness, reverse = True)
+        top = sorted(self.boards, key=lambda b: b.fitness, reverse=True)
         if top[0].fitness > self.best.fitness:
             self.best = top[0]
-        
+
         if not any(b.alive for b in self.boards):
             self.natural_selection()
-    
-    def show(self, _size = Vector(500, 500), _pos = Vector(300, 0)):
-        top = sorted(self.boards, key=lambda b: b.fitness, reverse = True)
-        
+
+    def show(self, _size=Vector(500, 500), _pos=Vector(300, 0)):
+        top = sorted(self.boards, key=lambda b: b.fitness, reverse=True)
+
         size = _size // self.grid
         count = 0
         for j in range(self.grid):
@@ -190,48 +191,48 @@ class Population:
                 count += 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     engine.size(400, 300, OPENGL)
     engine.frame_rate = 60
     engine.text_size = 40
-    
+
     mutation_rate = 0.01
     board = Board(21, 21)
-    population = Population(21, 21, num = 1)
+    population = Population(21, 21, num=1)
 
     @engine.event
     def key_pressed(e):
-        if e.key_code == 'left':
+        if e.key_code == "left":
             board.dir = Vector(-1, 0)
-        elif e.key_code == 'right':
+        elif e.key_code == "right":
             board.dir = Vector(1, 0)
-        elif e.key_code == 'up':
+        elif e.key_code == "up":
             board.dir = Vector(0, -1)
-        elif e.key_code == 'down':
+        elif e.key_code == "down":
             board.dir = Vector(0, 1)
 
     @engine.draw
     def draw():
         engine.background = 51
-        
+
         # rot = map(engine.mouse, 0, engine.viewport, -1, 1) * PI
         # engine.rotate_x(rot.y)
         # engine.rotate_y(rot.x)
 
         # if board.alive:
-            # board.update()
+        # board.update()
         # board.show()
-        
+
         population.update()
         population.show(Vector(300, 300), Vector(100, 0))
-        
-        top = sorted(population.boards, key=lambda b: b.fitness, reverse = True)[0]
-        
+
+        top = sorted(population.boards, key=lambda b: b.fitness, reverse=True)[0]
+
         engine.fill = 255
-        engine.text(f'Generation: {population.generation}', Vector(10, 10, -1))
-        engine.text(f'Score: {top.score}', Vector(10, 40, -1))
-        engine.text(f'Health: {top.health}', Vector(10, 70, -1))
-        engine.text(f'Age: {top.age}', Vector(10, 100, -1))
-        engine.text(f'Fitness: {top.fitness}', Vector(10, 130, -1))
+        engine.text(f"Generation: {population.generation}", Vector(10, 10, -1))
+        engine.text(f"Score: {top.score}", Vector(10, 40, -1))
+        engine.text(f"Health: {top.health}", Vector(10, 70, -1))
+        engine.text(f"Age: {top.age}", Vector(10, 100, -1))
+        engine.text(f"Fitness: {top.fitness}", Vector(10, 130, -1))
 
     engine.start()
