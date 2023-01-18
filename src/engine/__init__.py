@@ -3,6 +3,11 @@ import os
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "True"
 os.environ["PYGAME_FREETYPE"] = "True"
 
+import pygame
+
+pygame.init()
+pygame.font.init()
+
 import numpy as np
 
 from .constants import *

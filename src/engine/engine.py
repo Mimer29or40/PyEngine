@@ -1,13 +1,11 @@
 import time
 
 import numpy as np
-import pygame
 
 from engine import *
 from engine.event import Event
 from engine.render import get_renderer
-
-pygame.init()
+from engine.vector import *
 
 
 class Engine:
@@ -27,7 +25,7 @@ class Engine:
 
     @frame_rate.setter
     def frame_rate(self, value):
-        self._frame_rate_inv = 0 if value < 1 else int(1_000_000_000 / value)
+        self._frame_rate_inv = 0 if value < 1 else int(1_000_000_000 // value)
 
     _frame_count = 0
 

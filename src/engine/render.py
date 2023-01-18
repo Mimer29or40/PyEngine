@@ -2,8 +2,10 @@ from functools import wraps
 
 from OpenGL.GL import *
 
-from engine import *
+# from engine import *
+from engine.constants import *
 from engine.gl import *
+from engine.vector import *
 
 X = Vector(1, 0, 0)
 Y = Vector(0, 1, 0)
@@ -695,7 +697,7 @@ class RenderOpenGL2(RenderOpenGL):
 
         if not engine.fill.is_none:
             self.arc_shader.use()
-            self.arc_shader.set_floatm("pv", pv)
+            self.arc_shader.set_floatm("pv", self.view @ self.proj)
             self.arc_shader.set_floatv("color", engine.fill.to_gl())
             self.arc_shader.set_floatv("radius", radius.xy)
             self.arc_shader.set_float("start", start)
@@ -711,7 +713,7 @@ class RenderOpenGL2(RenderOpenGL):
 
         if not engine.stroke.is_none:
             self.arc_outline_shader.use()
-            self.arc_outline_shader.set_floatm("pv", pv)
+            self.arc_outline_shader.set_floatm("pv", self.view @ self.proj)
             self.arc_outline_shader.set_floatv("color", engine.stroke.to_gl())
             self.arc_outline_shader.set_floatv("radius", radius.xy)
             self.arc_outline_shader.set_floatv("viewport", engine.viewport)

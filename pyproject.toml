@@ -4,7 +4,7 @@
 # name
 # TOML type: string
 # The name of the project.
-name = "engine"
+name = "pyengine"
 
 # version
 # TOML type: string
@@ -125,7 +125,8 @@ requires-python = ">=3.8"
 #   string. Each string maps directly to a Requires-Dist entry.
 dependencies = [  # Defined in setup.py until PyCharm can detect requirements here
     "pygame",
-    "numpy"
+    "PyOpengl",
+    "numpy",
 ]
 
 # dynamic
@@ -195,7 +196,7 @@ Documentation = "https://github.com/Mimer29or40/PyEngine/wiki"
 #   metadata.
 [project.optional-dependencies]
 tests = [  # Defined in setup.py until PyCharm can detect requirements here
-    "tox"
+    "tox",
 ]
 
 [tool.setuptools]
