@@ -1,7 +1,8 @@
 import time
 
 import pygame
-from engine2 import util
+
+from pyengine import util
 
 _keys = {}
 _buttons = {}

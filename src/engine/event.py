@@ -2,6 +2,10 @@ from engine import *
 
 
 class Event:
+    type: int
+    time: int
+    modifiers: int
+
     def __init__(self, engine, _type, **kwargs):
         object.__setattr__(self, "type", _type)
         object.__setattr__(self, "time", engine.time)

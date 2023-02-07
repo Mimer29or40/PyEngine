@@ -4,9 +4,10 @@ import time as _time
 from typing import Optional
 from typing import Type
 
+import numpy as np
+
 from .types import AbstractEngine
-from .vector import Vector2
-from .vector import Vector2c
+from .vector import vector2
 
 
 def instance(instance_cls: Type[AbstractEngine]) -> Type[AbstractEngine]:
@@ -38,16 +39,16 @@ def draw_rate(draw_rate: int = None, /) -> int:
     return state.draw_rate
 
 
-def viewport() -> Vector2c:
-    return Vector2(*state.viewport)
+def viewport() -> np.ndarray:
+    return state.viewport.copy()
 
 
 def width() -> int:
-    return state.viewport.x
+    return state.viewport[0]
 
 
 def height() -> int:
-    return state.viewport.y
+    return state.viewport[1]
 
 
 class State:
@@ -77,7 +78,7 @@ class State:
         self.draw_rate: int = 0
         self.draw_rate_inv: int = 0
 
-        self.viewport: Vector2 = Vector2(0, 0)
+        self.viewport: np.ndarray = vector2(0, 0, dtype=int)
 
 
 state: State = State()

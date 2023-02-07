@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import ABC
 from typing import Iterable
 from typing import Type
 from typing import Union
@@ -23,351 +22,258 @@ NTypes = Union[
 DType = Union[int, float, NTypes]
 
 
-def to_tuple2(data):
+def vector2(*data: DType, dtype: Type[DType] = float) -> np.ndarray:
     dlen = len(data)
     if dlen == 0:
-        return 0, 0
+        return np.array([0, 0], dtype=dtype)
     if dlen == 1:
-        if isinstance(data[0], tuple) and len(data[0]) == 2:
-            return data[0]
-        return data[0], data[0]
+        if isinstance(data[0], Iterable):
+            return vector2(data[0], dtype=dtype)
+        return np.array([data[0], data[0]], dtype=dtype)
     if dlen == 2:
-        return data
+        return np.array(data, dtype=dtype)
     raise TypeError("Invalid Arguments Provided")
 
 
-def to_tuple3(data):
+def vector3(*data: DType, dtype: Type[DType] = float) -> np.ndarray:
     dlen = len(data)
     if dlen == 0:
-        return 0, 0, 0
+        return np.array([0, 0, 0], dtype=dtype)
     if dlen == 1:
-        if isinstance(data[0], tuple) and len(data[0]) == 3:
-            return data[0]
-        return data[0], data[0], data[0]
+        if isinstance(data[0], Iterable):
+            return vector3(data[0], dtype=dtype)
+        return np.array([data[0], data[0], data[0]], dtype=dtype)
     if dlen == 2:
-        return *to_tuple2(data[0]), data[1]
+        return np.array([*vector2(data[0], dtype=dtype), data[1]], dtype=dtype)
     if dlen == 3:
-        return data
+        return np.array(data, dtype=dtype)
     raise TypeError("Invalid Arguments Provided")
 
 
-def to_tuple4(data):
+def vector4(*data: DType, dtype: Type[DType] = float) -> np.ndarray:
     dlen = len(data)
     if dlen == 0:
-        return 0, 0, 0, 0
+        return np.array([0, 0, 0, 0], dtype=dtype)
     if dlen == 1:
-        if isinstance(data[0], tuple) and len(data[0]) == 4:
-            return data[0]
-        return data[0], data[0], data[0], data[0]
+        if isinstance(data[0], Iterable):
+            return vector4(data[0], dtype=dtype)
+        return np.array([data[0], data[0], data[0], data[0]], dtype=dtype)
     if dlen == 2:
-        if isinstance(data[0], tuple) and len(data[0]) == 3:
-            return *to_tuple3(data[0]), data[1]
-        return *to_tuple2(data[0]), *to_tuple2(data[1])
+        if isinstance(data[0], Iterable) and len(data[0]) == 3:
+            return np.array([*vector3(data[0], dtype=dtype), data[1]], dtype=dtype)
+        return np.array(
+            [*vector2(data[0], dtype=dtype), *vector2(data[1], dtype=dtype)], dtype=dtype
+        )
     if dlen == 3:
-        return *to_tuple2(data[0]), data[1], data[2]
+        return np.array([*vector2(data[0], dtype=dtype), data[1], data[2]], dtype=dtype)
     if dlen == 4:
-        return data
+        return np.array(data, dtype=dtype)
     raise TypeError("Invalid Arguments Provided")
 
 
-class Vector2c(ABC):
-    pass
+def vector_random(order: int, normalize: bool = True) -> np.ndarray:
+    vector = 2.0 * np.random.random((order,)) - 1.0
+    if normalize:
+        return vector_normalize(vector)
+    return vector
 
 
-# noinspection PyUnresolvedReferences
-class Vector2(Vector2c, np.ndarray):
-    def __new__(cls, *data, dtype: Type[DType] = float):
-        return np.array(to_tuple2(data), dtype=dtype).view(cls)
+def vector_magnitude(v: np.ndarray) -> DType:
+    return np.linalg.norm(v)
 
-    def __eq__(self, other: Vector2Like) -> bool:
-        return np.all(super().__eq__(other))
 
-    def __ne__(self, other: Vector2Like) -> bool:
-        return not self.__eq__(other)
+def vector_magnitude_sq(v: np.ndarray) -> DType:
+    return vector_dot(v, v)
 
-    @property
-    def x(self) -> DType:
-        return self[0]
 
-    @x.setter
-    def x(self, value: DType):
-        self[0] = value
+def vector_normalize(v: np.ndarray, *, out: np.ndarray = None) -> np.ndarray:
+    if out is None:
+        out = np.array(v)
 
-    @property
-    def y(self) -> DType:
-        return self[1]
+    out[:] = v.__truediv__(vector_magnitude(v))
 
-    @y.setter
-    def y(self, value: DType):
-        self[1] = value
+    return out
 
-    @property
-    def magnitude(self) -> DType:
-        return np.linalg.norm(self)
 
-    @magnitude.setter
-    def magnitude(self, value: DType):
-        self.__imul__(value / self.magnitude)
+# noinspection PyTypeChecker
+def vector_dot(  # TODO - Check Bounds
+    v1: np.ndarray, v2: np.ndarray, *, out: np.ndarray = None
+) -> DType:
+    if out is None:
+        out = np.array(v1)
 
-    # noinspection PyTypeChecker
-    @property
-    def magnitude_sq(self) -> DType:
-        return np.dot(self, self)
+    out[:] = np.dot(v1, v2)
+    return out
 
-    def normalize(self) -> Vector2:
-        return self.__truediv__(self.magnitude)
 
-    def normalize_self(self) -> Vector2:
-        return self.__itruediv__(self.magnitude)
+def vector_cross(  # TODO - Check Bounds
+    v1: np.ndarray, v2: np.ndarray, *, out: np.ndarray = None
+) -> np.ndarray:
+    if out is None:
+        out = np.array(v1)
 
-    def perpendicular(self) -> Vector2:
-        return Vector2(self.y, -self.x)
+    out[:] = np.cross(v1, v2)
+    return out
 
-    def perpendicular_self(self) -> Vector2:
-        self[:] = self.y, -self.x
-        return self
 
-    # noinspection PyTypeChecker
-    def dot(self, other: Vector2Like) -> DType:
-        return np.dot(self, other)
+def vector_angle_between(v1: np.ndarray, v2: np.ndarray) -> DType:  # TODO - Check Bounds
+    dot = vector_dot(v1, v2)
+    mag1 = vector_magnitude(v1)
+    mag2 = vector_magnitude(v2)
+    return np.math.acos(dot / (mag1 * mag2))
 
-    # noinspection PyTypeChecker
-    def angle(self) -> float:
-        return np.angle(self.x + self.y * 1j)
 
-    def angle_between(self, other: Vector2Like) -> float:
-        dot: float = self.x * other[0] + self.y * other[1]
-        det: float = self.x * other[1] - self.y * other[0]
-        return np.arctan2(det, dot)
+def vector_distance(v1: np.ndarray, v2: np.ndarray) -> DType:  # TODO - Check Bounds
+    return vector_magnitude(v2 - v1)
 
-    def distance(self, other: Vector2Like) -> float:
-        return np.linalg.norm(self - other)
 
-    def distance_sq(self, other: Vector2Like) -> float:
-        dx: float = self.x - other[0]
-        dy: float = self.y - other[1]
-        return dx * dx + dy * dy
+def vector_distance_sq(v1: np.ndarray, v2: np.ndarray) -> DType:  # TODO - Check Bounds
+    return vector_magnitude_sq(v2 - v1)
 
-    def lerp(self, other: Vector2Like, t: float) -> Vector2:
-        return (other - self) * t + self
 
-    def smooth_step(self, other: Vector2Like, t: float) -> Vector2:
-        t2 = t * t
-        t3 = t2 * t
-        return (
-            (self + self - other - other) * t3 + (3.0 * other - 3.0 * self) * t2 + self * t + self
+def vector_lerp(  # TODO - Check Bounds
+    v1: np.ndarray, v2: np.ndarray, t: float, *, out: np.ndarray = None
+) -> np.ndarray:
+    if out is None:
+        out = np.array(v1)
+
+    out[:] = (v2 - v1) * t + v1
+    return out
+
+
+def vector2_from_angle2(theta: float) -> np.ndarray:
+    return vector2(np.math.cos(theta), np.math.sin(theta), dtype=float)
+
+
+def vector2_perpendicular(  # TODO - Check Bounds
+    v: np.ndarray, *, out: np.ndarray = None
+) -> np.ndarray:
+    if out is None:
+        out = np.array(v)
+
+    out[:] = v[1], -v[0]
+    return out
+
+
+def vector2_angle(v: np.ndarray) -> DType:  # TODO - Check Bounds
+    return np.angle(v[0] + v[1] * 1j)
+
+
+def matrix3(*, dtype: Type[DType] = float) -> np.ndarray:
+    return np.identity(3, dtype=dtype)
+
+
+def matrix4(*, dtype: Type[DType] = float) -> np.ndarray:
+    return np.identity(4, dtype=dtype)
+
+
+def matrix_inverse(m: np.ndarray, *, out: np.ndarray = None) -> np.ndarray:  # TODO - Check Bounds
+    if out is None:
+        out = np.array(m)
+
+    out[:] = np.linalg.inv(m)
+    return out
+
+
+def matrix_translate(  # TODO - Check Bounds
+    m: np.ndarray,
+    v: np.ndarray,
+    distance: DType = 1.0,
+    normalize: bool = False,
+    *,
+    out: np.ndarray = None,
+) -> np.ndarray:
+    if normalize:
+        v = vector_normalize(v)
+
+    if out is None:
+        out = np.array(m)
+
+    if vector_magnitude(v) == 0:
+        return out
+
+    out[-1, :-1] = m[-1, :-1] + distance * m[:-1, :-1].dot(v)
+    return out
+
+
+def matrix_translate_abs(  # TODO - Check Bounds
+    m: np.ndarray,
+    v: np.ndarray,
+    distance: DType = 1.0,
+    normalize: bool = False,
+    *,
+    out: np.ndarray = None,
+) -> np.ndarray:
+    if normalize:
+        v = vector_normalize(v)
+
+    if out is None:
+        out = np.array(m)
+
+    if vector_magnitude(v) == 0:
+        return out
+
+    out[-1, :-1] = m[-1, :-1] + distance * v
+    return out
+
+
+def matrix_rotate(  # TODO - Check Bounds
+    m: np.ndarray,
+    v: np.ndarray,
+    theta: DType = 1.0,
+    normalize: bool = False,
+    *,
+    out: np.ndarray = None,
+) -> np.ndarray:
+    if normalize:
+        v = vector_normalize(v)
+
+    if out is None:
+        out = np.array(m)
+
+    if vector_magnitude(v) == 0:
+        return out
+
+    s: float = np.sin(theta)
+    c: float = np.cos(theta)
+
+    if m.shape[0] == 4:
+        tmp = (1.0 - c) * v
+
+        out[:-1, :-1] = (
+            m[:-1, :-1].dot(tmp[0] * v + [c, s * v[2], -s * v[1]]),
+            m[:-1, :-1].dot(tmp[1] * v + [-s * v[2], c, s * v[0]]),
+            m[:-1, :-1].dot(tmp[2] * v + [s * v[1], -s * v[0], c]),
         )
+    else:
+        out[:-1, :-1] = (out[:-1, :-1].dot([c, s]), out[:-1, :-1].dot([-s, c]))
+    return out
 
 
-Vector2Like = Union[Vector2c, np.ndarray, DType, Iterable[DType]]
+def matrix_scale(  # TODO - Check Bounds
+    m: np.ndarray,
+    v: np.ndarray,
+    amount: DType = 1.0,
+    normalize: bool = False,
+    *,
+    out: np.ndarray = None,
+) -> np.ndarray:
+    if normalize:
+        v = vector_normalize(v)
+
+    if out is None:
+        out = np.array(m)
+
+    if vector_magnitude(v) == 0:
+        return out
+
+    out[:-1, :-1] = m[:-1, :-1] * v * amount
+    return out
 
 
-class Vector3c(ABC):
-    pass
+VECTOR_X: np.ndarray = vector3(1, 0, 0, dtype=float)
+VECTOR_Y: np.ndarray = vector3(0, 1, 0, dtype=float)
+VECTOR_Z: np.ndarray = vector3(0, 0, 1, dtype=float)
 
-
-# noinspection PyUnresolvedReferences
-class Vector3(Vector3c, np.ndarray):
-    def __new__(cls, *data, dtype: Type[DType] = float):
-        return np.array(to_tuple3(data), dtype=dtype).view(cls)
-
-    def __eq__(self, other: Vector3Like) -> bool:
-        return np.all(super().__eq__(other))
-
-    def __ne__(self, other: Vector3Like) -> bool:
-        return not self.__eq__(other)
-
-    @property
-    def x(self) -> DType:
-        return self[0]
-
-    @x.setter
-    def x(self, value: DType):
-        self[0] = value
-
-    @property
-    def y(self) -> DType:
-        return self[1]
-
-    @y.setter
-    def y(self, value: DType):
-        self[1] = value
-
-    @property
-    def z(self) -> DType:
-        return self[2]
-
-    @z.setter
-    def z(self, value: DType):
-        self[2] = value
-
-    @property
-    def magnitude(self) -> DType:
-        return np.linalg.norm(self)
-
-    @magnitude.setter
-    def magnitude(self, value: DType):
-        self.__imul__(value / self.magnitude)
-
-    # noinspection PyTypeChecker
-    @property
-    def magnitude_sq(self) -> DType:
-        return np.dot(self, self)
-
-    def normalize(self) -> Vector3:
-        return self.__truediv__(self.magnitude)
-
-    def normalize_self(self) -> Vector3:
-        return self.__itruediv__(self.magnitude)
-
-    # noinspection PyTypeChecker
-    def dot(self, other: Vector3Like) -> DType:
-        return np.dot(self, other)
-
-    def cross(self, other: Vector3Like):
-        return np.cross(self, other).view(Vector3)
-
-    def angle_between(self, other: Vector3Like) -> float:
-        x = self.x
-        y = self.y
-        z = self.z
-        length1_sq: float = x * x + (y * y + (z * z))
-        v = to_tuple3(other)
-        length2_sq: float = v[0] * v[0] + (v[1] * v[1] + (v[2] * v[2]))
-        dot: float = x * v[0] + (y * v[1] + (z * v[2]))
-        cos: float = dot / np.sqrt(length1_sq * length2_sq)
-        # This is because sometimes cos goes above 1 or below -1 because of lost precision
-        cos = cos if cos < 1 else 1
-        cos = cos if cos > -1 else -1
-        return np.acos(cos)
-
-    def distance(self, other: Vector3Like) -> float:
-        return np.linalg.norm(self - other)
-
-    def distance_sq(self, other: Vector3Like) -> float:
-        dx: float = self.x - other[0]
-        dy: float = self.y - other[1]
-        return dx * dx + dy * dy
-
-    def lerp(self, other: Vector3Like, t: float) -> Vector3:
-        return (other - self) * t + self
-
-    def smooth_step(self, other: Vector2Like, t: float) -> Vector2:
-        t2 = t * t
-        t3 = t2 * t
-        return (
-            (self + self - other - other) * t3 + (3.0 * other - 3.0 * self) * t2 + self * t + self
-        )
-
-
-Vector3Like = Union[Vector3c, np.ndarray, DType, Iterable[DType]]
-
-
-class Vector4c(ABC):
-    pass
-
-
-# noinspection PyUnresolvedReferences
-class Vector4(Vector4c, np.ndarray):
-    def __new__(cls, *data, dtype: Type[DType] = float):
-        return np.array(to_tuple4(data), dtype=dtype).view(cls)
-
-    def __eq__(self, other: Vector4Like) -> bool:
-        return np.all(super().__eq__(other))
-
-    def __ne__(self, other: Vector4Like) -> bool:
-        return not self.__eq__(other)
-
-    @property
-    def x(self) -> DType:
-        return self[0]
-
-    @x.setter
-    def x(self, value: DType):
-        self[0] = value
-
-    @property
-    def y(self) -> DType:
-        return self[1]
-
-    @y.setter
-    def y(self, value: DType):
-        self[1] = value
-
-    @property
-    def z(self) -> DType:
-        return self[2]
-
-    @z.setter
-    def z(self, value: DType):
-        self[2] = value
-
-    @property
-    def w(self) -> DType:
-        return self[3]
-
-    @w.setter
-    def w(self, value: DType):
-        self[3] = value
-
-    @property
-    def magnitude(self) -> DType:
-        return np.linalg.norm(self)
-
-    @magnitude.setter
-    def magnitude(self, value: DType):
-        self.__imul__(value / self.magnitude)
-
-    # noinspection PyTypeChecker
-    @property
-    def magnitude_sq(self) -> DType:
-        return np.dot(self, self)
-
-    def normalize(self) -> Vector4:
-        return self.__truediv__(self.magnitude)
-
-    def normalize_self(self) -> Vector4:
-        return self.__itruediv__(self.magnitude)
-
-    # noinspection PyTypeChecker
-    def dot(self, other: Vector4Like) -> DType:
-        return np.dot(self, other)
-
-    def cross(self, other: Vector4Like):
-        return np.cross(self, other).view(Vector4)
-
-    def angle_between(self, other: Vector4Like) -> float:
-        x = self.x
-        y = self.y
-        z = self.z
-        w = self.w
-        length1_sq: float = x * x + (y * y + (z * z + (w * w)))
-        v = to_tuple4(other)
-        length2_sq: float = v[0] * v[0] + (v[1] * v[1] + (v[2] * v[2] + (v[3] * v[3])))
-        dot: float = x * v[0] + (y * v[1] + (z * v[2] + (w * v[3])))
-        cos: float = dot / np.sqrt(length1_sq * length2_sq)
-        # This is because sometimes cos goes above 1 or below -1 because of lost precision
-        cos = cos if cos < 1 else 1
-        cos = cos if cos > -1 else -1
-        return np.acos(cos)
-
-    def distance(self, other: Vector4Like) -> float:
-        return np.linalg.norm(self - other)
-
-    def distance_sq(self, other: Vector4Like) -> float:
-        dx: float = self.x - other[0]
-        dy: float = self.y - other[1]
-        return dx * dx + dy * dy
-
-    def lerp(self, other: Vector4Like, t: float) -> Vector4:
-        return (other - self) * t + self
-
-    def smooth_step(self, other: Vector2Like, t: float) -> Vector2:
-        t2 = t * t
-        t3 = t2 * t
-        return (
-            (self + self - other - other) * t3 + (3.0 * other - 3.0 * self) * t2 + self * t + self
-        )
-
-
-Vector4Like = Union[Vector4c, np.ndarray, DType, Iterable[DType]]
+MATRIX_3: np.ndarray = matrix3(dtype=float)
+MATRIX_4: np.ndarray = matrix4(dtype=float)

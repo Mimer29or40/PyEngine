@@ -8,11 +8,11 @@ class AbstractEngine(ABC):
         pass
 
     @abstractmethod
-    def update(self, time: int, delta_time: int) -> None:
+    def update(self, time: float, delta_time: float) -> None:
         pass
 
     @abstractmethod
-    def draw(self, time: int, delta_time: int) -> None:
+    def draw(self, time: float, delta_time: float) -> None:
         pass
 
     @abstractmethod

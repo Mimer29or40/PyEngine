@@ -1,15 +1,22 @@
-from .color import Color
-from .vector import Vector3
-from .vector import Vector3c
+from typing import Tuple
 
-X: Vector3c = Vector3(1, 0, 0)
-Y: Vector3c = Vector3(0, 1, 0)
-Z: Vector3c = Vector3(0, 0, 1)
+import numpy as np
+
+from .color import color
+from .state import State
+from .vector import VECTOR_X
+from .vector import VECTOR_Y
+from .vector import VECTOR_Z
+from .vector import matrix_rotate
+from .vector import matrix_scale
+from .vector import matrix_translate
+
+state: State = State()
 
 
 class Renderer:
     def __init__(self):
-        self.view = Matrix.identity(4)
+        self.view = np.identity(3, dtype=float)
 
     def get_flags(self):
         return 0
@@ -17,68 +24,68 @@ class Renderer:
     def set_background(self, color):
         pass
 
-    def setup(self, engine):
-        self.set_background(Color())
+    def setup(self):
+        self.set_background(color())
 
-    def before_draw(self, engine):
+    def before_draw(self):
         pass
 
-    def after_draw(self, engine):
+    def after_draw(self):
         pass
 
-    def translate(self, amount):
-        self.view.translate(amount, 1)
+    def translate(self, v: np.ndarray):
+        matrix_translate(self.view, v, out=self.view)
 
-    def rotate(self, angle, axis=None):
+    def rotate(self, theta: float, axis: np.ndarray = None):
         if axis is None:
-            self.view.rotate(Z, angle)
+            matrix_rotate(self.view, VECTOR_Z, theta, out=self.view)
         else:
-            self.view.rotate(axis, angle)
+            matrix_rotate(self.view, axis, theta, out=self.view)
 
-    def rotate_x(self, angle):
-        self.view.rotate(X, angle)
+    def rotate_x(self, theta: float):
+        matrix_rotate(self.view, VECTOR_X, theta, out=self.view)
 
-    def rotate_y(self, angle):
-        self.view.rotate(Y, angle)
+    def rotate_y(self, theta: float):
+        matrix_rotate(self.view, VECTOR_Y, theta, out=self.view)
 
-    def rotate_z(self, angle):
-        self.view.rotate(Z, angle)
+    def rotate_z(self, theta: float):
+        matrix_rotate(self.view, VECTOR_Z, theta, out=self.view)
 
-    def scale(self, amount):
-        self.view.scale(amount, 1)
+    def scale(self, v: np.ndarray):
+        matrix_scale(self.view, v, out=self.view)
 
-    def point(self, engine, p):
+    def point(self, p):
         pass
 
-    def line(self, engine, p1, p2):
+    def line(self, p1, p2):
         pass
 
-    def lines(self, engine, *points):
+    def lines(self, *points):
         pass
 
-    def polygon(self, engine, *points):
+    def polygon(self, *points):
         pass
 
-    def triangle(self, engine, p1, p2, p3):
+    def triangle(self, p1, p2, p3):
         pass
 
-    def quad(self, engine, p1, p2, p3, p4):
+    def quad(self, p1, p2, p3, p4):
         pass
 
-    def ellipse(self, engine, p1, p2):
+    def ellipse(self, p1, p2):
         pass
 
-    def arc(self, engine, p1, p2, start, stop):
+    def arc(self, p1, p2, start, stop):
         pass
 
-    def text(self, engine, text, pos):
+    def text(self, text, pos):
         pass
 
-    def load_pixels(self, engine):
-        size = (engine.height, engine.width, 4)
+    def load_pixels(self):
+        size: Tuple[int, int, int] = (state.viewport[0], state.viewport[1], 4)
         arr = np.zeros(size, dtype=np.uint8)
         arr[:, :, 3] = 255
         return arr
 
-    def update_pixels(self, engine):
+    def update_pixels(self):
         pass

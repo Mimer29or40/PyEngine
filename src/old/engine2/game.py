@@ -1,5 +1,6 @@
 import numpy as np
-from engine2 import util
+
+from pyengine import util
 
 
 class GameObject:
