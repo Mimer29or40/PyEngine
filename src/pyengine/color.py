@@ -131,7 +131,7 @@ def to_gray(r: Union[int, float], g: Union[int, float], b: Union[int, float]) ->
     ) & 0xFF
 
 
-def color(*data: DType) -> ColorType:
+def color(*data: ColorLike) -> ColorType:
     dlen = len(data)
     if dlen == 0:
         return np.array([0, 0, 0, 255], dtype=np.uint8)

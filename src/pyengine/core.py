@@ -8,6 +8,8 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 
+from .draw import draw_pop
+from .draw import draw_push
 from .io import destroy as io_destroy
 from .io import setup as io_setup
 from .io import update as io_update
@@ -25,13 +27,6 @@ class Engine:
     should_run: bool = False
 
     start_time: int = 0
-    current_time: int = 0
-
-    update_delta: int = 0
-    update_last: int = 0
-
-    draw_delta: int = 0
-    draw_last: int = 0
 
 
 def instance(instance_cls: Type[AbstractEngine]) -> Type[AbstractEngine]:
@@ -58,6 +53,7 @@ def time_seconds() -> float:
 
 
 class AbstractEngine(ABC):
+    title: str = None
     size: Tuple[int, int] = 320, 300
     update_rate: int = 0
     draw_rate: int = 60
@@ -103,34 +99,77 @@ def setup() -> None:
 
     Engine.should_run = True
 
-    io_setup(vector2(Engine.instance.size, dtype=int), "Title")
+    size = vector2(Engine.instance.size, dtype=int)
+    if Engine.instance.title is None:
+        Engine.instance.title = Engine.instance_cls.__name__
+    io_setup(size, Engine.instance.title)
 
     Engine.instance.setup()
 
 
 def run() -> None:
-    Engine.update_last = Engine.draw_last = time_nanoseconds()
+    current_time = time_nanoseconds()
 
-    update_rate = Engine.instance.update_rate
-    update_rate_inv = 0 if update_rate < 1 else 1_000_000_000 // update_rate
+    update_rate: int = Engine.instance.update_rate
+    update_rate_inv: int = 0 if update_rate < 1 else 1_000_000_000 // update_rate
+    update_delta: int
+    update_last: int = current_time
+    update_times: list[int] = list(range(500))
 
-    draw_rate = Engine.instance.draw_rate
-    draw_rate_inv = 0 if draw_rate < 1 else 1_000_000_000 // draw_rate
+    draw_rate: int = Engine.instance.draw_rate
+    draw_rate_inv: int = 0 if draw_rate < 1 else 1_000_000_000 // draw_rate
+    draw_delta: int
+    draw_last: int = current_time
+    draw_times: list[int] = list(range(500))
+
+    times_rate_inv: int = 1_000_000_000
+    times_delta: int
+    times_last: int = current_time
 
     while Engine.should_run:
-        Engine.current_time = time_nanoseconds()
+        current_time = time_nanoseconds()
+        update_delta = current_time - update_last
+        if update_delta >= update_rate_inv:
+            update_last = current_time
 
-        Engine.update_delta = Engine.current_time - Engine.update_last
-        if Engine.update_delta >= update_rate_inv:
-            Engine.update_last = Engine.current_time
+            update(current_time, update_delta)
 
-            update(Engine.current_time, Engine.update_delta)
+            update_times.pop(0)
+            update_times.append(time_nanoseconds() - current_time)
 
-        Engine.draw_delta = Engine.current_time - Engine.draw_last
-        if Engine.draw_delta >= draw_rate_inv:
-            Engine.draw_last = Engine.current_time
+        current_time = time_nanoseconds()
+        draw_delta = current_time - draw_last
+        if draw_delta >= draw_rate_inv:
+            draw_last = current_time
 
-            draw(Engine.current_time, Engine.draw_delta)
+            draw(current_time, draw_delta)
+
+            draw_times.pop(0)
+            draw_times.append(time_nanoseconds() - current_time)
+
+        current_time = time_nanoseconds()
+        times_delta = current_time - times_last
+        if times_delta >= times_rate_inv:
+            times_last = current_time
+
+            update_times.sort()
+            update_len = len(update_times)
+            update_avg = sum(update_times) / update_len / 1_000_000.0
+            update_5 = update_times[int(update_len * 0.05)] / 1_000_000.0
+            update_1 = update_times[int(update_len * 0.01)] / 1_000_000.0
+
+            draw_times.sort(reverse=True)
+            draw_len = len(draw_times)
+            draw_avg = sum(draw_times) / draw_len / 1_000_000.0
+            draw_5 = draw_times[int(draw_len * 0.05)] / 1_000_000.0
+            draw_1 = draw_times[int(draw_len * 0.01)] / 1_000_000.0
+
+            print(
+                (
+                    f"Update: avg={update_avg:0.3f}ms 5%={update_5:0.3f}ms 1%={update_1:0.3f}ms - "
+                    f"Draw: avg={draw_avg:0.3f}ms 5%={draw_5:0.3f}ms 1%={draw_1:0.3f}ms"
+                )
+            )
 
         _time.sleep(0)
 
@@ -157,6 +196,8 @@ def draw(time: int, delta_time: int):
     time_d: float = time / 1_000_000_000.0
     delta_time_d: float = delta_time / 1_000_000_000.0
 
+    draw_push()
     Engine.instance.draw(time_d, delta_time_d)
+    draw_pop()
 
     window_swap()

@@ -7,6 +7,8 @@ from engine.event import Event
 from engine.render import get_renderer
 from engine.vector import *
 
+pygame.font.init()
+
 
 class Engine:
     _instance = None

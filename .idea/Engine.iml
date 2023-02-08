@@ -4,6 +4,8 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/CodingTrain" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/CodingTrainOld" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
       <excludeFolder url="file://$MODULE_DIR$/src/engine.egg-info" />
       <excludeFolder url="file://$MODULE_DIR$/.tox" />
