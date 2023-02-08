@@ -1,55 +1,74 @@
-from engine import *
+from pyengine import *
 
 
 class Star:
+    @classmethod
+    def _max_depth(cls) -> float:
+        return window_size()[0] * 10
+
+    @classmethod
+    def _new_vector(cls) -> VectorType:
+        size: VectorType = window_size()
+        pos: VectorType = vector_random(2, False) * size * 5
+        z = random(cls._max_depth())
+        return vector3(pos, z, dtype=float)
+
     def __init__(self):
-        x, y = random(-engine.viewport / 2, engine.viewport / 2)
-        z = random(engine.width / 2)
-        self.pos = Vector(x, y, z)
-        self.pz = self.pos.z
+        self.pos = self._new_vector()
+        self.pz = self.pos[2]
 
-    def update(self):
-        self.pos.z -= speed
-        if self.pos.z < 1:
-            x, y = random(-engine.viewport / 2, engine.viewport / 2)
-            z = random(engine.width / 2)
-            self.pos.xyz = [x, y, z]
-            self.pz = self.pos.z
+    def update(self, speed: float):
+        self.pos[2] -= speed
+        if self.pos[2] < 1:
+            self.pos = self._new_vector()
+            self.pz = self.pos[2]
 
-    def show(self):
-        engine.fill = 255
-        engine.stroke = None
+    def draw(self):
+        draw_color(color(255, 255, 255, 255))
 
-        s = map(self.pos.xy / self.pos.z, 0, 1, 0, engine.viewport / 2)
-        r = map(self.pos.z, 0, engine.width / 2, 16, 0)
-        engine.circle(s, r)
+        size: VectorType = window_size()
 
-        engine.stroke = 255
+        pos: VectorType = (self.pos[0:2] / self.pos[2]) * size / 2
+        pos_prev: VectorType = (self.pos[0:2] / self.pz) * size / 2
 
-        p = map(self.pos.xy / self.pz, 0, 1, 0, engine.viewport / 2)
-        engine.line(p, s)
+        radius: float = map_number(self.pos[2], 0, self._max_depth(), 16, -1)
+        draw_thickness(radius)
 
-        self.pz = self.pos.z
+        draw_point(pos)
+        draw_line(pos_prev, pos)
+
+        self.pz = self.pos[2]
+
+
+@instance
+class Engine(AbstractEngine):
+    title = "001 - Star Field"
+    size = 400, 400
+    update_rate = 0
+    draw_rate = 60
+
+    stars: list[Star]
+
+    def setup(self) -> None:
+        self.stars = [Star() for _ in range(50)]
+
+    def update(self, time: float, delta_time: float) -> None:
+        speed: float = map_number(mouse_pos()[0], 0, window_pos()[0], 0, 50)
+
+        for s in self.stars:
+            s.update(speed)
+
+    def draw(self, time: float, delta_time: float) -> None:
+        draw_clear()
+
+        draw_translate(window_size() / 2)
+
+        for s in self.stars:
+            s.draw()
+
+    def destroy(self) -> None:
+        pass
 
 
 if __name__ == "__main__":
-    engine.size(400, 400, OPENGL)
-
-    speed = 0
-    stars = [Star() for _ in range(50)]
-
-    @engine.draw
-    def draw():
-        global speed
-
-        speed = map(engine.mouse.x, 0, engine.width, 0, 50)
-
-        engine.background = 0
-
-        engine.translate(engine.viewport / 2)
-
-        for s in stars:
-            s.update()
-            s.show()
-
-    engine.start()
+    start()
