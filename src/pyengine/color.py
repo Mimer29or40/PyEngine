@@ -11,6 +11,8 @@ import numpy as np
 from OpenGL import GL
 
 DType = Union[int, np.uint8]
+ColorType = np.ndarray
+ColorLike = Union[DType, Iterable[DType]]
 
 IBlendEqn = Callable[[int, int], int]
 IBlendFunc = Callable[[int, int, int, int], int]
@@ -129,7 +131,7 @@ def to_gray(r: Union[int, float], g: Union[int, float], b: Union[int, float]) ->
     ) & 0xFF
 
 
-def color(*data: DType) -> np.ndarray:
+def color(*data: DType) -> ColorType:
     dlen = len(data)
     if dlen == 0:
         return np.array([0, 0, 0, 255], dtype=np.uint8)
@@ -146,11 +148,11 @@ def color(*data: DType) -> np.ndarray:
     raise TypeError("Invalid Arguments Provided")
 
 
-def colorf(*data: DType) -> np.ndarray:
+def colorf(*data: DType) -> ColorType:
     return color(*map(to_int, data))
 
 
-def color_tint(c1: np.ndarray, c2: np.ndarray, *, out: np.ndarray = None) -> np.ndarray:
+def color_tint(c1: ColorType, c2: ColorType, *, out: ColorType = None) -> ColorType:
     if out is None:
         out = np.array(c1)
     out[:] = (
@@ -162,7 +164,7 @@ def color_tint(c1: np.ndarray, c2: np.ndarray, *, out: np.ndarray = None) -> np.
     return out
 
 
-def color_grayscale(c: np.ndarray, *, out: np.ndarray = None) -> np.ndarray:
+def color_grayscale(c: ColorType, *, out: ColorType = None) -> ColorType:
     if out is None:
         out = np.array(c)
 
@@ -172,7 +174,7 @@ def color_grayscale(c: np.ndarray, *, out: np.ndarray = None) -> np.ndarray:
     return out
 
 
-def color_brightness(c: np.ndarray, brightness: int, *, out: np.ndarray = None) -> np.ndarray:
+def color_brightness(c: ColorType, brightness: int, *, out: ColorType = None) -> ColorType:
     if out is None:
         out = np.array(c)
 
@@ -185,7 +187,7 @@ def color_brightness(c: np.ndarray, brightness: int, *, out: np.ndarray = None) 
     return out
 
 
-def color_contrast(c: np.ndarray, contrast: int, *, out: np.ndarray = None) -> np.ndarray:
+def color_contrast(c: ColorType, contrast: int, *, out: ColorType = None) -> ColorType:
     if out is None:
         out = np.array(c)
 
@@ -205,7 +207,7 @@ def color_contrast(c: np.ndarray, contrast: int, *, out: np.ndarray = None) -> n
     return out
 
 
-def color_gamma(c: np.ndarray, gamma: float, *, out: np.ndarray = None) -> np.ndarray:
+def color_gamma(c: ColorType, gamma: float, *, out: ColorType = None) -> ColorType:
     if out is None:
         out = np.array(c)
 
@@ -220,7 +222,7 @@ def color_gamma(c: np.ndarray, gamma: float, *, out: np.ndarray = None) -> np.nd
     return out
 
 
-def color_invert(c: np.ndarray, *, out: np.ndarray = None) -> np.ndarray:
+def color_invert(c: ColorType, *, out: ColorType = None) -> ColorType:
     if out is None:
         out = np.array(c)
 
@@ -228,7 +230,7 @@ def color_invert(c: np.ndarray, *, out: np.ndarray = None) -> np.ndarray:
     return out
 
 
-def color_brighter(c: np.ndarray, percentage: float, *, out: np.ndarray = None) -> np.ndarray:
+def color_brighter(c: ColorType, percentage: float, *, out: ColorType = None) -> ColorType:
     if out is None:
         out = np.array(c)
 
@@ -250,7 +252,7 @@ def color_brighter(c: np.ndarray, percentage: float, *, out: np.ndarray = None) 
     return out
 
 
-def color_darker(c: np.ndarray, percentage: float, *, out: np.ndarray = None) -> np.ndarray:
+def color_darker(c: ColorType, percentage: float, *, out: ColorType = None) -> ColorType:
     if out is None:
         out = np.array(c)
 
@@ -272,7 +274,7 @@ def color_darker(c: np.ndarray, percentage: float, *, out: np.ndarray = None) ->
     return out
 
 
-def color_lerp(c1: np.ndarray, c2: np.ndarray, t: float, *, out: np.ndarray = None) -> np.ndarray:
+def color_lerp(c1: ColorType, c2: ColorType, t: float, *, out: ColorType = None) -> ColorType:
     if out is None:
         out = np.array(c1)
 
@@ -296,8 +298,8 @@ def color_lerp(c1: np.ndarray, c2: np.ndarray, t: float, *, out: np.ndarray = No
 
 
 def color_blend(
-    src: np.ndarray, dst: np.ndarray, blend_mode: BlendMode = None, *, out: np.ndarray = None
-) -> np.ndarray:
+    src: ColorType, dst: ColorType, blend_mode: BlendMode = None, *, out: ColorType = None
+) -> ColorType:
     if out is None:
         out = np.array(src)
 

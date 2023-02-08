@@ -3,6 +3,9 @@ from abc import abstractmethod
 
 
 class AbstractEngine(ABC):
+    width: int = 320
+    height: int = 200
+
     @abstractmethod
     def setup(self) -> None:
         pass

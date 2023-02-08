@@ -7,6 +7,7 @@ from .io import destroy as io_destroy
 from .io import setup as io_setup
 from .io import update as io_update
 from .io import window_on_close
+from .io import window_swap
 from .state import State
 from .state import time
 from .vector import vector2
@@ -18,8 +19,6 @@ state: State = State()
 
 def start(width: int = 320, height: int = 200, renderer=None) -> None:
     try:
-        state.viewport = vector2(width, height, dtype=int)
-
         setup()
 
         run()
@@ -42,7 +41,7 @@ def setup() -> None:
 
     state.should_run = True
 
-    io_setup(state.viewport, "Title")
+    io_setup(vector2(state.instance.width, state.instance.height, dtype=int), "Title")
 
     state.instance.setup()
 
@@ -92,4 +91,4 @@ def draw(time: int, delta_time: int):
 
     state.instance.draw(time_d, delta_time_d)
 
-    pygame.display.flip()
+    window_swap()

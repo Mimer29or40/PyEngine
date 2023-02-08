@@ -14,10 +14,8 @@ from typing import Sequence
 import numpy as np
 import pygame
 
-from .state import State
+from .vector import VectorType
 from .vector import vector2
-
-state: State = State()
 
 
 @dataclass
@@ -39,7 +37,7 @@ class Input:
 @dataclass
 class ButtonInput(Input):
     dragging: bool = False
-    down_pos: Final[np.ndarray] = vector2(0, 0, dtype=float)
+    down_pos: Final[VectorType] = vector2(0, 0, dtype=float)
 
 
 class Button(Enum):
@@ -262,20 +260,20 @@ class IO:
     window_maximized_change: Optional[bool] = None
     window_on_maximized: bool = False
 
-    window_pos: Final[np.ndarray] = vector2(0, 0, dtype=int)
-    window_pos_change: Optional[np.ndarray] = None
+    window_pos: Final[VectorType] = vector2(0, 0, dtype=int)
+    window_pos_change: Optional[VectorType] = None
     window_on_pos: bool = False
 
-    window_size: Final[np.ndarray] = vector2(0, 0, dtype=int)
-    window_size_change: Optional[np.ndarray] = None
+    window_size: Final[VectorType] = vector2(0, 0, dtype=int)
+    window_size_change: Optional[VectorType] = None
     window_on_size: bool = False
 
-    window_content_scale: Final[np.ndarray] = vector2(0, 0, dtype=float)
-    window_content_scale_change: Optional[np.ndarray] = None
+    window_content_scale: Final[VectorType] = vector2(0, 0, dtype=float)
+    window_content_scale_change: Optional[VectorType] = None
     window_on_content_scale: bool = False
 
-    window_framebuffer_size: Final[np.ndarray] = vector2(0, 0, dtype=int)
-    window_framebuffer_size_change: Optional[np.ndarray] = None
+    window_framebuffer_size: Final[VectorType] = vector2(0, 0, dtype=int)
+    window_framebuffer_size_change: Optional[VectorType] = None
     window_on_framebuffer_size: bool = False
 
     window_refresh_requested: bool = False
@@ -294,15 +292,15 @@ class IO:
     mouse_entered_change: Optional[bool] = None
     mouse_on_entered: bool = False
 
-    mouse_pos: Final[np.ndarray] = vector2(0, 0, dtype=int)
-    mouse_pos_change: Optional[np.ndarray] = None
+    mouse_pos: Final[VectorType] = vector2(0, 0, dtype=int)
+    mouse_pos_change: Optional[VectorType] = None
     mouse_on_pos: bool = False
     mouse_pos_do_event: bool = True
 
-    mouse_pos_delta: Final[np.ndarray] = vector2(0, 0, dtype=int)
+    mouse_pos_delta: Final[VectorType] = vector2(0, 0, dtype=int)
 
-    mouse_scroll: Final[np.ndarray] = vector2(0, 0, dtype=int)
-    mouse_scroll_change: Optional[np.ndarray] = None
+    mouse_scroll: Final[VectorType] = vector2(0, 0, dtype=int)
+    mouse_scroll_change: Optional[VectorType] = None
     mouse_on_scroll: bool = False
 
     mouse_button_states: Dict[Button, ButtonInput] = {}
@@ -331,10 +329,11 @@ class IO:
     modifier_include_lock_mods: bool = False
 
 
-def setup(size: np.ndarray, title: str) -> None:
+def setup(size: VectorType, title: str) -> None:
     from pygame._sdl2 import Window
 
     pygame.init()
+    print("PYGAME INIT")
 
     # ---------- Window ---------- #
     IO.window = pygame.display.set_mode(size, pygame.RESIZABLE)
@@ -699,7 +698,7 @@ def window_on_maximized() -> bool:
     return IO.window_on_maximized
 
 
-def window_pos() -> np.ndarray:
+def window_pos() -> VectorType:
     return IO.window_pos.copy()
 
 
@@ -707,7 +706,7 @@ def window_on_pos_change() -> bool:
     return IO.window_on_pos
 
 
-def window_size() -> np.ndarray:
+def window_size() -> VectorType:
     return IO.window_size.copy()
 
 
@@ -715,7 +714,7 @@ def window_on_size_change() -> bool:
     return IO.window_on_size
 
 
-def window_content_scale() -> np.ndarray:
+def window_content_scale() -> VectorType:
     return IO.window_content_scale
 
 
@@ -723,7 +722,7 @@ def window_on_content_scale_change() -> bool:
     return IO.window_on_content_scale
 
 
-def window_framebuffer_size() -> np.ndarray:
+def window_framebuffer_size() -> VectorType:
     return IO.window_framebuffer_size
 
 
@@ -780,11 +779,11 @@ def mouse_on_entered() -> bool:
     return IO.mouse_on_entered
 
 
-def mouse_pos() -> np.ndarray:
+def mouse_pos() -> VectorType:
     return IO.mouse_pos.copy()
 
 
-def mouse_pos_delta() -> np.ndarray:
+def mouse_pos_delta() -> VectorType:
     return IO.mouse_pos_delta.copy()
 
 
@@ -792,7 +791,7 @@ def mouse_on_pos_change() -> bool:
     return IO.mouse_on_pos
 
 
-def mouse_scroll() -> np.ndarray:
+def mouse_scroll() -> VectorType:
     return IO.mouse_scroll
 
 
