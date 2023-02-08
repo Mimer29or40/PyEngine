@@ -1,23 +1,85 @@
+from __future__ import annotations
+
 import logging
 import time as _time
-
-import pygame
+from abc import ABC
+from abc import abstractmethod
+from typing import Optional
+from typing import Tuple
+from typing import Type
 
 from .io import destroy as io_destroy
 from .io import setup as io_setup
 from .io import update as io_update
 from .io import window_on_close
 from .io import window_swap
-from .state import State
-from .state import time
 from .vector import vector2
 
 logger = logging.getLogger(__name__)
 
-state: State = State()
+
+class Engine:
+    instance_cls: Optional[Type[AbstractEngine]] = None
+    instance: Optional[AbstractEngine] = None
+
+    should_run: bool = False
+
+    start_time: int = 0
+    current_time: int = 0
+
+    update_delta: int = 0
+    update_last: int = 0
+
+    draw_delta: int = 0
+    draw_last: int = 0
 
 
-def start(width: int = 320, height: int = 200, renderer=None) -> None:
+def instance(instance_cls: Type[AbstractEngine]) -> Type[AbstractEngine]:
+    Engine.instance_cls = instance_cls
+    return Engine.instance_cls
+
+
+def time_nanoseconds() -> int:
+    if Engine.start_time > 0:
+        return _time.perf_counter_ns() - Engine.start_time
+    return 0
+
+
+def time_microseconds() -> float:
+    return time_nanoseconds() / 1_000.0
+
+
+def time_milliseconds() -> float:
+    return time_nanoseconds() / 1_000_000.0
+
+
+def time_seconds() -> float:
+    return time_nanoseconds() / 1_000_000_000.0
+
+
+class AbstractEngine(ABC):
+    size: Tuple[int, int] = 320, 300
+    update_rate: int = 0
+    draw_rate: int = 60
+
+    @abstractmethod
+    def setup(self) -> None:
+        pass
+
+    @abstractmethod
+    def update(self, time: float, delta_time: float) -> None:
+        pass
+
+    @abstractmethod
+    def draw(self, time: float, delta_time: float) -> None:
+        pass
+
+    @abstractmethod
+    def destroy(self) -> None:
+        pass
+
+
+def start() -> None:
     try:
         setup()
 
@@ -29,46 +91,52 @@ def start(width: int = 320, height: int = 200, renderer=None) -> None:
 
 
 def stop():
-    state.should_run = False
+    Engine.should_run = False
 
 
 def setup() -> None:
-    if state.instance_cls is None:
+    if Engine.instance_cls is None:
         raise ValueError("Must provide an AbstractEngine class")
-    state.instance = state.instance_cls()
+    Engine.instance = Engine.instance_cls()
 
-    state.start_time = _time.perf_counter_ns()
+    Engine.start_time = _time.perf_counter_ns()
 
-    state.should_run = True
+    Engine.should_run = True
 
-    io_setup(vector2(state.instance.width, state.instance.height, dtype=int), "Title")
+    io_setup(vector2(Engine.instance.size, dtype=int), "Title")
 
-    state.instance.setup()
+    Engine.instance.setup()
 
 
 def run() -> None:
-    state.update_last = state.draw_last = time()
+    Engine.update_last = Engine.draw_last = time_nanoseconds()
 
-    while state.should_run:
-        state.current_time = time()
+    update_rate = Engine.instance.update_rate
+    update_rate_inv = 0 if update_rate < 1 else 1_000_000_000 // update_rate
 
-        state.update_delta = state.current_time - state.update_last
-        if state.update_delta >= state.update_rate_inv:
-            state.update_last = state.current_time
+    draw_rate = Engine.instance.draw_rate
+    draw_rate_inv = 0 if draw_rate < 1 else 1_000_000_000 // draw_rate
 
-            update(state.current_time, state.update_delta)
+    while Engine.should_run:
+        Engine.current_time = time_nanoseconds()
 
-        state.draw_delta = state.current_time - state.draw_last
-        if state.draw_delta >= state.draw_rate_inv:
-            state.draw_last = state.current_time
+        Engine.update_delta = Engine.current_time - Engine.update_last
+        if Engine.update_delta >= update_rate_inv:
+            Engine.update_last = Engine.current_time
 
-            draw(state.current_time, state.draw_delta)
+            update(Engine.current_time, Engine.update_delta)
+
+        Engine.draw_delta = Engine.current_time - Engine.draw_last
+        if Engine.draw_delta >= draw_rate_inv:
+            Engine.draw_last = Engine.current_time
+
+            draw(Engine.current_time, Engine.draw_delta)
 
         _time.sleep(0)
 
 
 def destroy() -> None:
-    state.instance.destroy()
+    Engine.instance.destroy()
 
     io_destroy()
 
@@ -77,18 +145,18 @@ def update(time: int, delta_time: int):
     io_update(time, delta_time)
 
     if window_on_close():
-        state.should_run = False
+        Engine.should_run = False
 
     time_d: float = time / 1_000_000_000.0
     delta_time_d: float = delta_time / 1_000_000_000.0
 
-    state.instance.update(time_d, delta_time_d)
+    Engine.instance.update(time_d, delta_time_d)
 
 
 def draw(time: int, delta_time: int):
     time_d: float = time / 1_000_000_000.0
     delta_time_d: float = delta_time / 1_000_000_000.0
 
-    state.instance.draw(time_d, delta_time_d)
+    Engine.instance.draw(time_d, delta_time_d)
 
     window_swap()

@@ -26,8 +26,14 @@ from .color import color_invert
 from .color import color_lerp
 from .color import color_tint
 from .color import colorf
+from .core import AbstractEngine
+from .core import instance
 from .core import start
 from .core import stop
+from .core import time_microseconds
+from .core import time_milliseconds
+from .core import time_nanoseconds
+from .core import time_seconds
 from .draw import draw_arc
 from .draw import draw_clear
 from .draw import draw_ellipse
@@ -117,12 +123,6 @@ from .io import window_on_refresh
 from .io import window_on_size_change
 from .io import window_pos
 from .io import window_size
-from .state import draw_rate
-from .state import instance
-from .state import time
-from .state import time_s
-from .state import update_rate
-from .types import AbstractEngine
 from .vector import MATRIX_3
 from .vector import MATRIX_4
 from .vector import VECTOR_X
